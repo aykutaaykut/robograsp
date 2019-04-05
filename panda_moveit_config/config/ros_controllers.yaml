@@ -26,16 +26,6 @@ world:
     publish_rate: 50
   controller_list:
     []
-  panda_hand_controller:
-    type: position_controllers/JointTrajectoryController
-    joints:
-      panda_finger_joint1
-    gains:
-      panda_finger_joint1:
-        p: 100
-        d: 1
-        i: 1
-        i_clamp: 1
   panda_arm_controller:
     type: position_controllers/JointTrajectoryController
     joints:
@@ -78,6 +68,16 @@ world:
         i: 1
         i_clamp: 1
       panda_joint7:
+        p: 100
+        d: 1
+        i: 1
+        i_clamp: 1
+  panda_hand_controller:
+    type: position_controllers/JointTrajectoryController
+    joints:
+      panda_finger_joint1
+    gains:
+      panda_finger_joint1:
         p: 100
         d: 1
         i: 1

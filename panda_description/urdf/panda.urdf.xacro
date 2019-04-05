@@ -1,0 +1,17 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="world">
+  <link name="world"/>
+  <xacro:include filename="$(find panda_description)/urdf/panda.urdf"/>
+    <joint name="virtual_joint" type="fixed">
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+        <parent link="world"/>
+        <child link="panda_link0"/>
+    </joint>
+
+  <xacro:include filename="$(find panda_description)/urdf/box.xacro"/>
+    <joint name="world_object_joint" type="fixed">
+      <origin xyz="0.5 0 0" rpy="0 0 0"/>
+        <parent link="world"/>
+        <child link="object_link"/>
+    </joint>
+</robot>

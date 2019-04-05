@@ -1,0 +1,19 @@
+<launch>
+
+  <arg name="load_robot_description" default="false"/>
+
+  <arg name="robot_description" default="robot_description"/>
+
+  <param if="$(arg load_robot_description)" name="$(arg robot_description)" command="xacro --inorder  '$(find panda_description)/urdf/panda.urdf.xacro'"/>
+
+  <param name="$(arg robot_description)_semantic" textfile="$(find panda_moveit_config)/config/world.srdf" />
+
+  <group ns="$(arg robot_description)_planning">
+    <rosparam command="load" file="$(find panda_moveit_config)/config/joint_limits.yaml"/>
+  </group>
+
+  <group ns="$(arg robot_description)_kinematics">
+    <rosparam command="load" file="$(find panda_moveit_config)/config/kinematics.yaml"/>
+  </group>
+
+</launch>

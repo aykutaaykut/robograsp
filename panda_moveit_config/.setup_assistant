@@ -6,6 +6,6 @@ moveit_setup_assistant_config:
   SRDF:
     relative_path: config/world.srdf
   CONFIG:
-    author_name: Aykut Aykut
-    author_email: aaykut13@ku.edu.tr
+    author_name: Aykut Aykut, Arda Arslan
+    author_email: aaykut13@ku.edu.tr, ararslan13@ku.edu.tr
     generated_timestamp: 1554427975

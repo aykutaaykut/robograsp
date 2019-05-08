@@ -1,0 +1,71 @@
+<?xml version="1.0"?>
+
+<robot name="panda" xmlns:xacro="http://www.ros.org/wiki/xacro">
+    <xacro:property name="M_PI" value="3.14159"/>
+    <!-- Included URDF/XACRO Files -->
+
+    <!--
+    <gazebo>
+        <plugin name="gazebo_ros_control" filename="libgazebo_ros_control.so">
+            <robotNamespace>panda</robotNamespace>
+        </plugin>
+    </gazebo>
+    -->
+
+    <link name="world" />
+    <!-- table -->
+    <xacro:include filename="$(find panda_sim_description)/urdf/table.xacro" />
+       <joint name="world_joint_table" type="fixed">
+           <origin xyz="0 0 0.175" rpy="0 0 0" />
+             <parent link="world"/>
+             <child link="table_base"/>
+       </joint>
+
+    <!-- box -->
+    <xacro:include filename="$(find panda_sim_description)/urdf/simple_box.urdf.xacro" />
+       <joint name="world_joint_box" type="fixed">
+           <origin xyz="0 0 0.15" rpy="0 0 0" />
+             <parent link="world"/>
+             <child link="box_link"/>
+       </joint>
+
+    <!-- common stuff -->
+    <xacro:include filename="$(find panda_sim_description)/urdf/common.gazebo.xacro" />
+
+
+    <!-- panda -->
+    <xacro:include filename="$(find panda_sim_description)/urdf/panda_arm.xacro" />
+    <!-- hand -->
+    <xacro:include filename="$(find panda_sim_description)/urdf/hand.xacro"/>
+    <!-- arm and hand -->
+    <xacro:panda_arm arm_id="panda" connected_to="boxtop_corner" />
+    <xacro:hand ns="panda" rpy="0 0 0" connected_to="panda_link8"/>
+    <!-- bottle1 -->
+    <xacro:include filename="$(find panda_sim_description)/urdf/bottle1.urdf.xacro" />
+    <!-- bottle2 -->
+    <xacro:include filename="$(find panda_sim_description)/urdf/bottle2.urdf.xacro" />
+
+    <joint name="table_to_bottle1" type="fixed">
+             <origin xyz="0.2 0.04 0.04" rpy="0 0 0" />
+             <parent link="tabletop_ontop"/>
+             <child link="bottle1_link"/>
+    </joint>
+
+    <joint name="table_to_bottle2" type="fixed">
+             <origin xyz="0.2 -0.04 0.04" rpy="0 0 0" />
+             <parent link="tabletop_ontop"/>
+             <child link="bottle2_link"/>
+    </joint>
+
+    <!--
+    <xacro:bhand_macro name="hand" parent="arm_ee_link">
+        <origin xyz="0 0 0" rpy="${M_PI/2} ${M_PI/2} ${M_PI/2}"/>
+    </xacro:bhand_macro>
+    -->
+
+
+    <!-- kinect -->
+    <!--xacro:include filename="$(find akgunlab_description)/urdf/sensors/kinect.urdf.xacro"/-->
+
+    <!--sensor_kinect  parent="tabletop_other_corner"/-->
+</robot>

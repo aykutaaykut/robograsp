@@ -1,0 +1,72 @@
+# Note: You MUST load these PID parameters for all joints that are using the
+# PositionJointInterface, otherwise the arm + gripper will act like a giant
+# parachute, counteracting gravity, and causing some of the wheels to lose
+# contact with the ground, so the robot won't be able to properly navigate. See
+# https://github.com/ros-simulation/gazebo_ros_pkgs/issues/612
+gazebo_ros_control:
+  pid_gains:
+    # these gains are used by the gazebo_ros_control plugin
+    panda_joint1:
+      p: 100000.0
+      i: 0.1
+      d: 100
+      i_clamp: 0.2
+      antiwindup: false
+      publish_state: true
+    # the following gains are used by the gazebo_mimic_joint plugin
+    panda_joint2:
+      p: 100000.0
+      i: 0.1
+      d: 100
+      i_clamp: 0.2
+      antiwindup: false
+      publish_state: true
+    panda_joint3:
+      p: 100000.0
+      i: 0.1
+      d: 100
+      i_clamp: 0.2
+      antiwindup: false
+      publish_state: true
+    panda_joint4:
+      p: 100000.0
+      i: 0.1
+      d: 100
+      i_clamp: 0.2
+      antiwindup: false
+      publish_state: true
+    panda_joint5:
+      p: 100000.0
+      i: 0.1
+      d: 100
+      i_clamp: 0.2
+      antiwindup: false
+      publish_state: true
+    panda_joint6:
+      p: 100000.0
+      i: 0.1
+      d: 100
+      i_clamp: 0.2
+      antiwindup: false
+      publish_state: true
+    panda_joint7:
+      p: 100.0
+      i: 0.1
+      d: 1
+      i_clamp: 0.2
+      antiwindup: false
+      publish_state: true
+    panda_finger_joint1:
+      p: 20.0
+      i: 0.1
+      d: 1
+      i_clamp: 0.2
+      antiwindup: false
+      publish_state: true
+    panda_finger_joint2:
+      p: 20.0
+      i: 0.1
+      d: 1
+      i_clamp: 0.2
+      antiwindup: false
+      publish_state: true

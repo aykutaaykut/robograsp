@@ -1,10 +1,13 @@
 #!/usr/bin/env python
+# rosrun pc_segmentation def_loop -rt /camera/points -v 0 -dt 0.5 -ct 5 -t 5 -e 0.1
+# rostopic echo /joint_states
 
 import sys
 import math
 import random
 import numpy as np
 import rospy
+from pc_segmentation.msg import PcFeatures
 import moveit_commander
 import std_msgs.msg
 import geometry_msgs.msg
@@ -12,6 +15,10 @@ import sensor_msgs.msg
 from gym import spaces
 from tf import TransformListener
 from panda_manipulation.MyObject import MyObject, Sphere, Box, Cylinder, Duck, Bunny
+
+import tf2_ros
+import tf2_geometry_msgs
+from geometry_msgs.msg import PoseStamped, PointStamped, Pose
 
 class RobotEnv():
     def __init__(self):
@@ -56,6 +63,7 @@ class RobotEnv():
         self.transform_listener = TransformListener()
         self.joint_states_sub = rospy.Subscriber('/joint_states', sensor_msgs.msg.JointState, self.joint_states_buffer)
         self.object = Box()
+        self.tf_buffer = tf2_ros.Buffer(rospy.Duration(1200.0))
 
     def joint_states_buffer(self, joint_states_msg):
         joint_dict = dict(zip(joint_states_msg.name, joint_states_msg.position))
@@ -135,7 +143,31 @@ class RobotEnv():
         self.object_initial_position = self.get_object_position()
         return np.concatenate((np.concatenate((self.arm_curr_joint_values, self.hand_curr_joint_values), axis=0), self.get_gripper_position('/world'), self.object_initial_position), axis=0).tolist()
 
+    def transform(self, coordinates):
+        transform = self.tf_buffer.lookup_transform("panda_link0",
+                                   "camera_depth_optical_frame",
+                                   rospy.Time(0),
+                                   rospy.Duration(1.0))
+
+        kinect_object = PointStamped()
+        kinect_object.point.x = coordinates.x
+        kinect_object.point.y = coordinates.y
+        kinect_object.point.z = coordinates.z
+        kinect_object.header = transform.header
+
+        robot_object = tf2_geometry_msgs.do_transform_point(kinect_object, transform)
+
+        pos = Pose()
+        pos.position.x = robot_object.point.x
+        pos.position.y = robot_object.point.y
+        pos.position.z = robot_object.point.z
+        pos.orientation = action.orientation
+
+        return pos
+
     def step(self, action):
+        before_data = rospy.wait_for_message('/baris/features', PcFeatures)
+        pose_before = self.transform(before_data.bb_center)
         done = False
         info = {}
         arm_action = action[:7]
@@ -156,7 +188,13 @@ class RobotEnv():
         elif np.linalg.norm(self.get_object_position() - self.object_initial_position) >= self.object_move_threshold:
             reward -= 10
             done = True
-        return np.concatenate((np.concatenate((self.arm_curr_joint_values, self.hand_curr_joint_values), axis=0), self.get_gripper_position('world'), self.get_object_position()), axis=0).tolist(), reward, done, {}
+
+        # state = np.concatenate((np.concatenate((self.arm_curr_joint_values, self.hand_curr_joint_values), axis=0), self.get_gripper_position('world'), self.get_object_position()), axis=0).tolist()
+        after_data = rospy.wait_for_message('/baris/features', PcFeatures)
+        pose_after = self.transform(after_data.bb_center)
+        reward = pose_after.z - pose_before.z
+        # pose_after.data yi 16 boyuta cevir
+        return  reward, done, {}
 
     def done(self):
         self.joint_states_sub.unregister()

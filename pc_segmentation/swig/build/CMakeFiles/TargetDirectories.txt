@@ -1,0 +1,3 @@
+/home/cem/software/pc-segmentation/swig/build/CMakeFiles/edit_cache.dir
+/home/cem/software/pc-segmentation/swig/build/CMakeFiles/rebuild_cache.dir
+/home/cem/software/pc-segmentation/swig/build/CMakeFiles/save_pc.dir

@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 
 import sys
+import os
+import pwd
 import math
 import random
 import datetime
@@ -20,10 +22,11 @@ EPSILON = 1.0
 EPSILON_DECAY = 0.995
 EPSILON_MIN = 0.001
 BATCH_SIZE = 32
-LOG_FILE = '/home/aykut/catkin_ws/src/dqn_log/dqn_log_' + str(datetime.datetime.now()) + '.txt'
+LOG_DIR = "/home/" + pwd.getpwuid(os.getuid())[0] + "/catkin_ws/src/dqn_log/"
+LOG_FILE = 'dqn_log_' + str(datetime.datetime.now()) + '.txt'
 
 def log(str):
-    with open(LOG_FILE, 'a+') as f:
+    with open(LOG_DIR + LOG_FILE, 'a+') as f:
         f.write(str + '\n')
 
 if __name__ == '__main__':
@@ -36,9 +39,9 @@ if __name__ == '__main__':
     action_dim = env.action_space.n
     dqn_agent = Agent(state_dim = state_dim, action_dim = action_dim, memory_size = MEMORY_SIZE, lr = LR, discount = DISCOUNT, epsilon = EPSILON, epsilon_decay = EPSILON_DECAY, epsilon_min = EPSILON_MIN, batch_size = BATCH_SIZE)
     done = False
-    
+
     reward_list = []
-    
+
     for e in range(1, EPISODES+1):
         dist_list = []
         log('###################################################')
@@ -69,22 +72,16 @@ if __name__ == '__main__':
                 break
             if len(dqn_agent.memory) > BATCH_SIZE:
                 dqn_agent.experience_replay()
-        
+
         plt.figure()
         plt.plot(dist_list)
-        plt.savefig('/home/aykut/catkin_ws/src/dqn_log/distance_figs/distance_' + str(e) + '.jpg')
+        plt.savefig(LOG_DIR + 'distance_figs/distance_' + str(e) + '.jpg')
         plt.close()
         reward_list.append(total_reward)
 
     plt.figure()
     plt.plot(reward_list)
-    plt.savefig('/home/aykut/catkin_ws/src/dqn_log/reward.jpg')
+    plt.savefig(LOG_DIR + 'reward.jpg')
     plt.close()
-    
+
 #    roscpp_shutdown()
-    
-
-
-
-
-

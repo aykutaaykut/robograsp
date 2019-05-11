@@ -196,13 +196,18 @@ class RobotEnv():
             reward -= 10
             done = True
 #        state = self.get_gripper_position('world')
-        state = np.concatenate((np.concatenate((self.arm_curr_joint_values, self.hand_curr_joint_values), axis=0), self.get_gripper_position('world'), self.get_object_position()), axis=0).tolist()
+        next_state = np.concatenate((np.concatenate((self.arm_curr_joint_values, self.hand_curr_joint_values), axis=0), self.get_gripper_position('world'), self.get_object_position()), axis=0).tolist()
         after_data = rospy.wait_for_message('/baris/features', PcFeatures)
         pose_after = self.transform(after_data.bb_center)
 #        reward = pose_after.position.z - pose_before.position.z
         # pose_after.data yi 16 boyuta cevir
-        return  state, reward, done, info, next_distance
+        return  next_state, reward, done, info, next_distance
 
     def done(self):
         self.joint_states_sub.unregister()
         rospy.signal_shutdown("done")
+
+
+
+
+

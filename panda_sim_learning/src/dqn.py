@@ -23,11 +23,11 @@ class Agent:
 	
 	def create_dl_network(self, input_dim, output_dim, optimizer_lr):
 		network = Sequential()
-		network.add(Dense(64, input_dim = input_dim, kernel_initializer = 'RandomUniform', activation = 'elu'))
-		network.add(Dense(128, kernel_initializer = 'RandomUniform', activation = 'elu'))
-		network.add(Dense(256, kernel_initializer = 'RandomUniform', activation = 'elu'))
-		network.add(Dense(512, kernel_initializer = 'RandomUniform', activation = 'elu'))
-		network.add(Dense(1024, kernel_initializer = 'RandomUniform', activation = 'elu'))
+		network.add(Dense(24, input_dim = input_dim, kernel_initializer = 'RandomUniform', activation = 'elu'))
+		network.add(Dense(64, kernel_initializer = 'RandomUniform', activation = 'elu'))
+#		network.add(Dense(256, kernel_initializer = 'RandomUniform', activation = 'elu'))
+#		network.add(Dense(512, kernel_initializer = 'RandomUniform', activation = 'elu'))
+#		network.add(Dense(1024, kernel_initializer = 'RandomUniform', activation = 'elu'))
 		network.add(Dense(output_dim, activation = 'linear'))
 		network.compile(loss = 'mse', optimizer = Adam(lr = optimizer_lr))
 		return network
@@ -53,7 +53,7 @@ class Agent:
 				q_target_val = q_target_val + (self.discount * np.amax(self.choose_action(s)))
 			q_target = self.choose_action(s)
 			q_target[a] = q_target_val
-			self.network.fit(s, q_target, epochs = 1, verbose = 0)
+			self.network.fit(s, q_target.reshape(1, self.action_dim), epochs = 1, verbose = 0)
 		if self.epsilon > self.epsilon_min:
 			self.epsilon *= self.epsilon_decay
 	
@@ -64,7 +64,7 @@ class Agent:
 		return self.network.save(file_path)
 	
 	def self_print(self):
-	    return '#state_dim: ' + str(self.state_dim) + '\n#action_dim: ' + str(self.action_dim) + '\n#memory_size: ' + str(self.memory_size) + '\n#lr: ' + str(self.lr) + '\n#discount: ' + str(self.discount) + '\n#epsilon: ' + str(self.epsilon) + '\n#epsilon_decay: ' + str(self.epsilon_decay) + '\n#epsilon_min: ' + str(self.epsilon_min) + '\n#batch_size: ' + str(self.batch_size)
+	    return '#state_dim: ' + str(self.state_dim) + '\n#action_dim: ' + str(self.action_dim) + '\n#memory_size: ' + str(len(self.memory)) + '\n#lr: ' + str(self.lr) + '\n#discount: ' + str(self.discount) + '\n#epsilon: ' + str(self.epsilon) + '\n#epsilon_decay: ' + str(self.epsilon_decay) + '\n#epsilon_min: ' + str(self.epsilon_min) + '\n#batch_size: ' + str(self.batch_size)
 
 #if __name__ == "__main__":
 #	env = gym.make('CartPole-v1')

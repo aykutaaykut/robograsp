@@ -1,0 +1,10 @@
+moveit_setup_assistant_config:
+  URDF:
+    package: panda_sim_description
+    relative_path: urdf/panda_sim_description_lfd.urdf.xacro
+  SRDF:
+    relative_path: config/panda.srdf
+  CONFIG:
+    author_name: Arda Arslan  Aykut Aykut
+    author_email: ararslan13@ku.edu.tr  aaykut13@ku.edu.tr
+    generated_timestamp: 1482343386

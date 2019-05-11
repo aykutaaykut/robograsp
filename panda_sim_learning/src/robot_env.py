@@ -107,7 +107,7 @@ class RobotEnv():
         gripper_curr_position = self.get_gripper_position('world')
         object_position = self.get_object_position()
         return np.linalg.norm(gripper_curr_position - (object_position + self.object_offset))
-    
+
     def initialize_arm_joint_values(self):
         return [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
 
@@ -128,7 +128,7 @@ class RobotEnv():
             if waiting_time >= threshold:
                 print "Time is up!"
                 break
-    
+
     def execute(self):
         try:
             arm_plan = self.arm.plan(self.arm_curr_joint_values)
@@ -144,7 +144,7 @@ class RobotEnv():
         self.execute()
         self.wait(0.01, 300)
         object_pose = geometry_msgs.msg.Pose()
-        object_pose.position.x = 0.15
+        object_pose.position.x = 0.3
         object_pose.position.y = 0.0
         object_pose.position.z = 0.8
         self.object.set_position(object_pose)
@@ -206,8 +206,3 @@ class RobotEnv():
     def done(self):
         self.joint_states_sub.unregister()
         rospy.signal_shutdown("done")
-
-
-
-
-

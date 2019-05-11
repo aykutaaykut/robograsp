@@ -1,7 +1,7 @@
 roscore
 
-roslaunch panda_sim_gazebo panda_sim_gazebo_world.launch
+roslaunch panda_sim_learning world.launch
 
-roslaunch panda_sim_moveit_config panda_moveit_planning_execution.launch
+rosrun pc_segmentation def_loop -rt /camera/points -v 0 -dt 0.5 -ct 5 -t 5 -e 0.1
 
-python ~/catkin_ws/src/panda_sim_gazebo/scripts/grasp.py
+gzclient

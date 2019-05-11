@@ -23,8 +23,11 @@ class Agent:
 	
 	def create_dl_network(self, input_dim, output_dim, optimizer_lr):
 		network = Sequential()
-		network.add(Dense(24, input_dim = input_dim, activation = 'relu'))
-		network.add(Dense(24, activation = 'relu'))
+		network.add(Dense(64, input_dim = input_dim, activation = 'relu'))
+		network.add(Dense(128, activation = 'relu'))
+		network.add(Dense(256, activation = 'relu'))
+		network.add(Dense(512, activation = 'relu'))
+		network.add(Dense(1024, activation = 'relu'))
 		network.add(Dense(output_dim, activation = 'linear'))
 		network.compile(loss = 'mse', optimizer = Adam(lr = optimizer_lr))
 		return network

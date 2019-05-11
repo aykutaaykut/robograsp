@@ -58,7 +58,7 @@ class RobotEnv():
         self.exec_time = [joint_num * self.joint_exec_duration for joint_num in range(1, 10)]
 
         self.distance_threshold = 0.1
-        self.object_offset = np.array([0.0, 0.0, 0.5])
+        self.object_offset = np.array([0.0, 0.0, 0.05])
         self.object_move_threshold = 0.05
 
         self.joint_states_sub = rospy.Subscriber('/joint_states', sensor_msgs.msg.JointState, self.joint_states_buffer)
@@ -106,7 +106,7 @@ class RobotEnv():
     def calculate_distance(self):
         gripper_curr_position = self.get_gripper_position('world')
         object_position = self.get_object_position()
-        return np.linalg.norm(gripper_curr_position - object_position - self.object_offset)
+        return np.linalg.norm(gripper_curr_position - (object_position + self.object_offset))
     
     def initialize_arm_joint_values(self):
         return [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
@@ -127,18 +127,22 @@ class RobotEnv():
             waiting_time += 0.01
             if waiting_time >= threshold:
                 print "Time is up!"
-                raise
+                break
+    
     def execute(self):
-        arm_plan = self.arm.plan(self.arm_curr_joint_values)
-        self.arm.execute(arm_plan)
-        hand_plan = self.hand.plan(self.hand_curr_joint_values)
-        self.hand.execute(hand_plan)
+        try:
+            arm_plan = self.arm.plan(self.arm_curr_joint_values)
+            self.arm.execute(arm_plan)
+            hand_plan = self.hand.plan(self.hand_curr_joint_values)
+            self.hand.execute(hand_plan)
+        except:
+            pass
 
     def reset(self):
         self.arm_curr_joint_values = self.initialize_arm_joint_values()
         self.hand_curr_joint_values = self.initialize_hand_joint_values()
         self.execute()
-        self.wait(0.01, 500)
+        self.wait(0.01, 300)
         object_pose = geometry_msgs.msg.Pose()
         object_pose.position.x = 0.15
         object_pose.position.y = 0.0
@@ -147,6 +151,7 @@ class RobotEnv():
         self.object.place_on_table()
         rospy.sleep(1)
         self.object_initial_position = self.get_object_position()
+#        return self.get_gripper_position('world')
         return np.concatenate((np.concatenate((self.arm_curr_joint_values, self.hand_curr_joint_values), axis=0), self.get_gripper_position('world'), self.object_initial_position), axis=0).tolist()
 
     def transform(self, coordinates):
@@ -178,9 +183,9 @@ class RobotEnv():
         self.arm_curr_joint_values = np.clip(list(map(add, self.arm_curr_joint_values, arm_action)), self.get_arm_joint_lower_limits(), self.get_arm_joint_upper_limits())
 #        self.hand_curr_joint_values = np.clip(self.hand_curr_joint_values + hand_action, self.get_hand_joint_lower_limits(), self.get_hand_joint_upper_limits())
         self.execute()
-        self.wait(0.01, 500)
+        self.wait(0.01, 300)
         next_distance = self.calculate_distance()
-        reward = -(next_distance * next_distance) + (0.5 * (next_distance - curr_distance) * (next_distance - curr_distance))
+        reward = -(next_distance**2) + (0.5 * ((next_distance - curr_distance)**2))
         if next_distance <= self.distance_threshold:
             reward += 100
             done = True
@@ -190,14 +195,19 @@ class RobotEnv():
         elif np.linalg.norm(self.get_object_position() - self.object_initial_position) >= self.object_move_threshold:
             reward -= 10
             done = True
-
+#        state = self.get_gripper_position('world')
         state = np.concatenate((np.concatenate((self.arm_curr_joint_values, self.hand_curr_joint_values), axis=0), self.get_gripper_position('world'), self.get_object_position()), axis=0).tolist()
         after_data = rospy.wait_for_message('/baris/features', PcFeatures)
         pose_after = self.transform(after_data.bb_center)
-        reward = pose_after.position.z - pose_before.position.z
+#        reward = pose_after.position.z - pose_before.position.z
         # pose_after.data yi 16 boyuta cevir
-        return  state, reward, done, info
+        return  state, reward, done, info, next_distance
 
     def done(self):
         self.joint_states_sub.unregister()
         rospy.signal_shutdown("done")
+
+
+
+
+

@@ -1,9 +1,9 @@
 <launch>
 
 	<include file="$(find panda_sim_gazebo)/launch/panda_sim_gazebo.launch" > </include>
-	
+
 	<include file="$(find panda_sim_moveit_config)/launch/panda_moveit_planning_execution.launch" > </include>
-	
+
 	<node name="learn" pkg="panda_sim_learning" type="learn.py" output="screen" />
 
 </launch>

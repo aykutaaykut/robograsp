@@ -42,10 +42,11 @@ if __name__ == '__main__':
     moveit_commander.roscpp_initialize(sys.argv)
     rospy.init_node('robot_env', anonymous = True)
     rospy.sleep(1)
-    
+
     if SAVE_NETWORK:
         os.mkdir(MODEL_DIR)
     env = RobotEnv()
+    env.reset()
     state_dim = env.observation_space.shape[0]
     action_dim = env.action_space.n
     dqn_agent = Agent(state_dim = state_dim, action_dim = action_dim, memory_size = MEMORY_SIZE, lr = LR, discount = DISCOUNT, epsilon = EPSILON, epsilon_decay = EPSILON_DECAY, epsilon_min = EPSILON_MIN, batch_size = BATCH_SIZE)
@@ -92,7 +93,7 @@ if __name__ == '__main__':
                 SAVE_PATH = MODEL_DIR + 'model_e_' + str(e) + '_t_' + str(t) + '.h5'
                 dqn_agent.save_network(SAVE_PATH)
         dqn_agent.decay_epsilon()
-        
+
         plt.figure()
         plt.plot(dist_list)
         plt.savefig(LOG_DIR + 'distance_figs/distance_' + str(e) + '.jpg')
@@ -107,8 +108,3 @@ if __name__ == '__main__':
     plt.close()
 
 #    roscpp_shutdown()
-
-
-
-
-

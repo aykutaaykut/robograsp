@@ -28,7 +28,7 @@ class RobotEnv():
         self.robot = moveit_commander.RobotCommander()
 
         self.arm = moveit_commander.move_group.MoveGroupCommander('panda_arm')
-        self.arm.set_end_effector_link('hand')
+        self.arm.set_end_effector_link('panda_hand')
         self.arm.set_pose_reference_frame('panda_link0')
 
         self.hand = moveit_commander.move_group.MoveGroupCommander('hand')
@@ -41,14 +41,14 @@ class RobotEnv():
         self.hand_curr_joint_values = [0.0, 0.0]
         self.hand_pre_joint_values = self.hand_curr_joint_values
 
-        self.arm_joint_limits = {'panda_joint1' : [-1.5282, 1.5282], 'panda_joint2' : [-1.7628, 1.7628], 'panda_joint3' : [-2.8973, 0],\
-        'panda_joint4' : [-3.0718, 0.0175], 'panda_joint5' : [-2.8973, 0], 'panda_joint6' : [-0.0175, 3.7525],'panda_joint7' : [-2.8973, 2.8973]}
+        self.arm_joint_limits = {'panda_joint1' : [-1.4, 1.4], 'panda_joint2' : [-1.0, 1.2], 'panda_joint3' : [-1.4, 1.4],\
+        'panda_joint4' : [-3.0, 0.0], 'panda_joint5' : [-2.8, 0], 'panda_joint6' : [0, 3.6], 'panda_joint7' : [-2.8, 2.8]}
         self.hand_joint_limits = {'panda_finger_joint1' : [-0.001, 0.04], 'panda_finger_joint2' : [-0.001, 0.04]}
-        
+
         # State and action space definition
         self.observation_limit = np.array([100]*2)
         self.observation_space = spaces.Box(low = -self.observation_limit, high = self.observation_limit)
-        self.action_step_size = 0.2
+        self.action_step_size = 0.1
 #        self.action_space = spaces.Discrete(2**len(self.arm_joint_names))
 #        self.actions = {k : v for k, v in zip(range(self.action_space.n), [list(a) for a in list(product([-self.action_step_size, +self.action_step_size], repeat = len(self.arm_joint_names)))])}
         self.action_space = spaces.Discrete(4)
@@ -90,13 +90,13 @@ class RobotEnv():
     def is_in_motion(self):
         arm_joint_diff = np.abs(np.array(self.arm_curr_joint_values) - np.array(self.arm_pre_joint_values))
         hand_joint_diff = np.abs(np.array(self.hand_curr_joint_values) - np.array(self.hand_pre_joint_values))
-        return any(arm_joint_diff > 0.1) or any(hand_joint_diff > 0.1)
+        return any(arm_joint_diff > (self.action_step_size/4.0)) or any(hand_joint_diff > (self.action_step_size/4.0))
 
     def get_arm_pose(self):
         return self.arm.get_current_pose()
 
     def get_hand_pose(self):
-        return self.arm.get_current_pose()
+        return self.hand.get_current_pose()
 
     def get_gripper_position(self, reference):
         tf = self.tf_buffer.lookup_transform(reference, 'panda_hand', rospy.Time(0), rospy.Duration(10.0))
@@ -115,7 +115,7 @@ class RobotEnv():
         return [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
 
     def initialize_hand_joint_values(self):
-        return [0.0, 0.0]
+        return [0.02, 0.02]
 
     def random_initialize_arm_joint_values(self):
         return np.random.uniform(self.get_arm_joint_lower_limits(), self.get_arm_joint_upper_limits(), len(self.arm_curr_joint_values)).tolist()
@@ -133,13 +133,15 @@ class RobotEnv():
                 break
 
     def execute(self):
-        try:
-            arm_plan = self.arm.plan(self.arm_curr_joint_values)
+        arm_plan = self.arm.plan(self.arm_curr_joint_values)
+        hand_plan = self.hand.plan(self.hand_curr_joint_values)
+
+        if (len(arm_plan.points) == 0) or (len(hand_plan.points) == 0):
+            return False
+        else:
             self.arm.execute(arm_plan)
-            hand_plan = self.hand.plan(self.hand_curr_joint_values)
             self.hand.execute(hand_plan)
-        except:
-            pass
+            return True
 
     def reset(self):
         self.arm_curr_joint_values = self.initialize_arm_joint_values()
@@ -185,13 +187,20 @@ class RobotEnv():
         curr_distance = self.calculate_distance()
         self.arm_curr_joint_values = np.clip(list(map(add, self.arm_curr_joint_values, arm_action)), self.get_arm_joint_lower_limits(), self.get_arm_joint_upper_limits())
 #        self.hand_curr_joint_values = np.clip(self.hand_curr_joint_values + hand_action, self.get_hand_joint_lower_limits(), self.get_hand_joint_upper_limits())
-        self.execute()
+        if self.execute():
+            successful_planning = True
+        else:
+            successful_planning = False
+
 #        self.wait(0.01, 300)
         next_distance = self.calculate_distance()
         # Reward definition
 #        reward = -(next_distance**2) + (0.5 * ((next_distance - curr_distance)**2))
         reward = -next_distance
-        if next_distance <= self.distance_threshold:
+        if not successful_planning:
+            reward -= 10
+            done = True
+        elif next_distance <= self.distance_threshold:
             reward += 100
             done = True
         elif self.get_object_position()[2] < 0.5:
@@ -199,6 +208,9 @@ class RobotEnv():
             done = True
         elif np.linalg.norm(self.get_object_position() - self.object_initial_position) >= self.object_move_threshold:
             reward -= 10
+            done = True
+        elif self.get_gripper_position("world")[2] < 0.7:
+            reward -= 100
             done = True
         next_state = [self.arm_curr_joint_values[1]] + [self.arm_curr_joint_values[3]]
 #        next_state = np.concatenate((np.concatenate((self.arm_curr_joint_values, self.hand_curr_joint_values), axis=0), self.get_gripper_position('world'), self.get_object_position()), axis=0).tolist()
@@ -211,8 +223,3 @@ class RobotEnv():
     def done(self):
         self.joint_states_sub.unregister()
         rospy.signal_shutdown("done")
-
-
-
-
-

@@ -46,13 +46,13 @@ class RobotEnv():
         self.hand_joint_limits = {'panda_finger_joint1' : [-0.001, 0.04], 'panda_finger_joint2' : [-0.001, 0.04]}
         
         # State and action space definition
-        self.observation_limit = np.array([100]*7)
+        self.observation_limit = np.array([100]*2)
         self.observation_space = spaces.Box(low = -self.observation_limit, high = self.observation_limit)
-        self.action_step_size = 0.05
+        self.action_step_size = 0.2
 #        self.action_space = spaces.Discrete(2**len(self.arm_joint_names))
 #        self.actions = {k : v for k, v in zip(range(self.action_space.n), [list(a) for a in list(product([-self.action_step_size, +self.action_step_size], repeat = len(self.arm_joint_names)))])}
         self.action_space = spaces.Discrete(4)
-        self.actions = {0 : [0.05, 0.05, 0.0, 0.0, 0.0, 0.0, 0.0], 1 : [-0.05, -0.05, 0.0, 0.0, 0.0, 0.0, 0.0], 2 : [0.05, -0.05, 0.0, 0.0, 0.0, 0.0, 0.0], 3 : [-0.05, 0.05, 0.0, 0.0, 0.0, 0.0, 0.0]}
+        self.actions = {0 : [0.0, +self.action_step_size, 0.0, +self.action_step_size, 0.0, 0.0, 0.0], 1 : [0.0, -self.action_step_size, 0.0, -self.action_step_size, 0.0, 0.0, 0.0], 2 : [0.0, +self.action_step_size, 0.0, -self.action_step_size, 0.0, 0.0, 0.0], 3 : [0.0, -self.action_step_size, 0.0, +self.action_step_size, 0.0, 0.0, 0.0]}
 
         self.state_dim = self.observation_space.shape[0]
         self.action_dim = self.action_space.n
@@ -154,7 +154,7 @@ class RobotEnv():
         self.object.place_on_table()
         rospy.sleep(1)
         self.object_initial_position = self.get_object_position()
-        return self.arm_curr_joint_values
+        return [self.arm_curr_joint_values[1]] + [self.arm_curr_joint_values[3]]
 #        return np.concatenate((np.concatenate((self.arm_curr_joint_values, self.hand_curr_joint_values), axis=0), self.get_gripper_position('world'), self.object_initial_position), axis=0).tolist()
 
     def transform(self, coordinates):
@@ -176,8 +176,8 @@ class RobotEnv():
         return pos
 
     def step(self, action):
-        before_data = rospy.wait_for_message('/baris/features', PcFeatures)
-        pose_before = self.transform(before_data.bb_center)
+#        before_data = rospy.wait_for_message('/baris/features', PcFeatures)
+#        pose_before = self.transform(before_data.bb_center)
         done = False
         info = {}
         arm_action = self.actions[action]
@@ -200,10 +200,10 @@ class RobotEnv():
         elif np.linalg.norm(self.get_object_position() - self.object_initial_position) >= self.object_move_threshold:
             reward -= 10
             done = True
-        next_state = self.arm_curr_joint_values
+        next_state = [self.arm_curr_joint_values[1]] + [self.arm_curr_joint_values[3]]
 #        next_state = np.concatenate((np.concatenate((self.arm_curr_joint_values, self.hand_curr_joint_values), axis=0), self.get_gripper_position('world'), self.get_object_position()), axis=0).tolist()
-        after_data = rospy.wait_for_message('/baris/features', PcFeatures)
-        pose_after = self.transform(after_data.bb_center)
+#        after_data = rospy.wait_for_message('/baris/features', PcFeatures)
+#        pose_after = self.transform(after_data.bb_center)
 #        reward = pose_after.position.z - pose_before.position.z
         # pose_after.data yi 16 boyuta cevir
         return  next_state, reward, done, info, next_distance

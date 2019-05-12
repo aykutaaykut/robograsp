@@ -23,8 +23,8 @@ class Agent:
 	
 	def create_dl_network(self, input_dim, output_dim, optimizer_lr):
 		network = Sequential()
-		network.add(Dense(24, input_dim = input_dim, kernel_initializer = 'RandomUniform', activation = 'elu'))
-		network.add(Dense(64, kernel_initializer = 'RandomUniform', activation = 'elu'))
+#		network.add(Dense(24, input_dim = input_dim, kernel_initializer = 'RandomUniform', activation = 'elu'))
+#		network.add(Dense(64, kernel_initializer = 'RandomUniform', activation = 'elu'))
 #		network.add(Dense(256, kernel_initializer = 'RandomUniform', activation = 'elu'))
 #		network.add(Dense(512, kernel_initializer = 'RandomUniform', activation = 'elu'))
 #		network.add(Dense(1024, kernel_initializer = 'RandomUniform', activation = 'elu'))
@@ -54,7 +54,9 @@ class Agent:
 			q_target = self.choose_action(s)
 			q_target[a] = q_target_val
 			self.network.fit(s, q_target.reshape(1, self.action_dim), epochs = 1, verbose = 0)
-		if self.epsilon > self.epsilon_min:
+	
+	def decay_epsilon(self):
+	    if self.epsilon > self.epsilon_min:
 			self.epsilon *= self.epsilon_decay
 	
 	def load_network(self, file_path):

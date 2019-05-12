@@ -19,12 +19,12 @@ LOG_DIR = '/home/' + pwd.getpwuid(os.getuid())[0] + '/catkin_ws/src/dqn_log/'
 LOG_FILE = 'dqn_log_' + str(datetime.datetime.now()) + '.txt'
 MODEL_DIR = '/home/' + pwd.getpwuid(os.getuid())[0] + '/catkin_ws/src/dqn_models/' + str(datetime.datetime.now()) + '/'
 
-EPISODES = 100
+EPISODES = 1000
 TIME_STEPS = 100
 MEMORY_SIZE = 20000
 LR = 0.001
 DISCOUNT = 0.95
-EPSILON = 1.0
+EPSILON = 0.3
 EPSILON_DECAY = 0.995
 EPSILON_MIN = 0.001
 BATCH_SIZE = 32
@@ -91,6 +91,7 @@ if __name__ == '__main__':
             if SAVE_NETWORK and e%10 == 0 and t%100 == 0:
                 SAVE_PATH = MODEL_DIR + 'model_e_' + str(e) + '_t_' + str(t) + '.h5'
                 dqn_agent.save_network(SAVE_PATH)
+        dqn_agent.decay_epsilon()
         
         plt.figure()
         plt.plot(dist_list)

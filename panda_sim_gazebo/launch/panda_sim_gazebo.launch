@@ -1,4 +1,6 @@
 <launch>
+  
+  <param name="robot_description" command="$(find xacro)/xacro --inorder '$(find panda_sim_description)/urdf/panda_sim_description_lfd.urdf.xacro'"/>
 
   <include file="$(find panda_sim_gazebo)/launch/empty_world.launch">
     <arg name="world_name" default="worlds/empty.world"/>
@@ -6,13 +8,10 @@
     <arg name="gui" default="false"/>
   </include>
   
-  <rosparam file="$(find panda_sim_gazebo)/controller/gazebo_controller.yaml" command="load" />
-  
-  <param name="robot_description" command="$(find xacro)/xacro --inorder '$(find panda_sim_description)/urdf/panda_sim_description_lfd.urdf.xacro'"/>
-
   <node name="spawn_gazebo_model" pkg="gazebo_ros" type="spawn_model" args="-urdf -param robot_description -model robot -z 0.1" respawn="false" output="screen"/>
-
-  <include file="$(find panda_sim_gazebo)/launch/panda_sim_controllers.launch"/>
+  
+  <rosparam file="$(find panda_sim_gazebo)/controller/gazebo_controller.yaml" command="load" />
   <include file="$(find panda_sim_gazebo)/launch/state_publishers.launch"/>
-
+  <include file="$(find panda_sim_gazebo)/launch/panda_sim_controllers.launch"/>
+  
 </launch>

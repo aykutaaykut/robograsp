@@ -135,8 +135,7 @@ class RobotEnv():
     def execute(self):
         arm_plan = self.arm.plan(self.arm_curr_joint_values)
         hand_plan = self.hand.plan(self.hand_curr_joint_values)
-
-        if (len(arm_plan.points) == 0) or (len(hand_plan.points) == 0):
+        if (len(arm_plan.joint_trajectory.points) == 0) or (len(hand_plan.joint_trajectory.points) == 0):
             return False
         else:
             self.arm.execute(arm_plan)

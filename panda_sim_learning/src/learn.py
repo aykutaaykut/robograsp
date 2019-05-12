@@ -24,7 +24,7 @@ TIME_STEPS = 100
 MEMORY_SIZE = 20000
 LR = 0.001
 DISCOUNT = 0.95
-EPSILON = 0.3
+EPSILON = 0.6
 EPSILON_DECAY = 0.995
 EPSILON_MIN = 0.001
 BATCH_SIZE = 32
@@ -47,8 +47,8 @@ if __name__ == '__main__':
         os.mkdir(MODEL_DIR)
     env = RobotEnv()
     env.reset()
-    state_dim = env.observation_space.shape[0]
-    action_dim = env.action_space.n
+    state_dim = env.state_dim
+    action_dim = env.action_dim
     dqn_agent = Agent(state_dim = state_dim, action_dim = action_dim, memory_size = MEMORY_SIZE, lr = LR, discount = DISCOUNT, epsilon = EPSILON, epsilon_decay = EPSILON_DECAY, epsilon_min = EPSILON_MIN, batch_size = BATCH_SIZE)
     LOAD_PATH = MODEL_DIR + LOAD_FILE
     try:

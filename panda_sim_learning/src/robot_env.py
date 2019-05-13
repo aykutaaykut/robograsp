@@ -37,6 +37,7 @@ class RobotEnv():
         self.arm.set_end_effector_link('panda_hand')
         self.arm.set_pose_reference_frame('panda_link0')
         self.hand = moveit_commander.move_group.MoveGroupCommander('hand')
+        
         self.arm_joint_names = ['panda_joint1', 'panda_joint2', 'panda_joint3', 'panda_joint4', 'panda_joint5', 'panda_joint6', 'panda_joint7']
         self.arm_joint_values = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
         self.arm_joint_limits = {'panda_joint1' : [-1.4, 1.4],
@@ -110,7 +111,7 @@ class RobotEnv():
         return [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
 
     def initialize_hand_joint_values(self):
-        return [0.02, 0.02]
+        return [0.04, 0.04]
 
     # def random_initialize_arm_joint_values(self):
     #     return np.random.uniform(self.get_arm_joint_lower_limits(), self.get_arm_joint_upper_limits(), len(self.arm_joint_values)).tolist()
@@ -159,7 +160,7 @@ class RobotEnv():
         self.plan_and_execute(arm_new_joint_values, hand_new_joint_values)
 
         object_pose = geometry_msgs.msg.Pose()
-        object_pose.position.x = 0.3
+        object_pose.position.x = 0.2
         object_pose.position.y = 0.0
         object_pose.position.z = 0.8
         self.object.set_position(object_pose)

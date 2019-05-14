@@ -1,13 +1,28 @@
+#!/usr/bin/env python
+
+import sys
 import rospy
-from moveit_python import *
-from moveit_msgs.msg import Grasp, PlaceLocation
+import moveit_commander
+import tf
+from math import pi
+from robot_env import RobotEnv
+import moveit_commander
+from trajectory_msgs.msg import JointTrajectory, JointTrajectoryPoint
+from moveit_msgs.msg import Grasp
+from geometry_msgs.msg import PoseStamped
 
-rospy.init_node("moveit_py")
-# provide arm group and gripper group names
-# also takes a third parameter "plan_only" which defaults to False
-p = PickPlaceInterface("panda_arm", "panda_hand")
+if __name__ == '__main__':
+    #simple test for pick
+    
+    moveit_commander.roscpp_initialize(sys.argv)
+    rospy.init_node('pick_py', anonymous = True)
+    rospy.sleep(1)
+    
+    env = RobotEnv()
+    env.reset()
+    env.grasp()
 
-g = Grasp()
-# fill in g
-# setup object named object_name using PlanningSceneInterface
-p.pickup("box_link", [g, ], support_name = "table_top")
+
+
+
+

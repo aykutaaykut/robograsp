@@ -30,13 +30,13 @@ from panda_manipulation.MyObject import MyObject, Sphere, Box, Cylinder, Duck, B
 class RobotEnv():
     def __init__(self):
         self.object_shape = [0.2, 0.04, 0.04]
-        self.object_position = [0.4, -0.15, 0.736] #fixed z=0.736 (table_height + table_thickness)
+        self.object_position = [0.2, -0.15, 0.736] #fixed z=0.736 (table_height + table_thickness)
         self.object = Box()
         self.arm_joint_indices_to_use = [1, 3, 5]
-        self.action_step_size = 0.1
+        self.action_step_size = 0.02
         self.distance_threshold = 0.02
-        self.object_offset = np.array([0.0, 0.0, 0.02])
-        self.object_move_threshold = 0.05
+        self.object_offset = np.array([0.0, 0.0, 0.01])
+        self.object_move_threshold = 0.02
 
         self.robot = moveit_commander.RobotCommander()
 
@@ -53,9 +53,9 @@ class RobotEnv():
         self.arm_joint_names = ['panda_joint1', 'panda_joint2', 'panda_joint3', 'panda_joint4', 'panda_joint5', 'panda_joint6', 'panda_joint7']
         self.arm_joint_values = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
         self.arm_joint_limits = {'panda_joint1' : [-1.4, 1.4],
-                                 'panda_joint2' :  [0.0, 1.2],
+                                 'panda_joint2' :  [-0.6, 1.2],
                                  'panda_joint3' : [-1.4, 1.4],
-                                 'panda_joint4' : [-3.0, 0.0],
+                                 'panda_joint4' : [-2.8, 0.0],
                                  'panda_joint5' : [-2.8, 0.0],
                                  'panda_joint6' :  [0.0, 3.6],
                                  'panda_joint7' : [-2.8, 2.8]}
@@ -242,7 +242,7 @@ class RobotEnv():
         # Reward definition
         # reward = -(next_distance**2) + (0.5 * ((next_distance - curr_distance)**2))
 
-        reward = curr_distance - 2 * next_distance - 1
+        reward = curr_distance - next_distance - 1
 
         if next_distance <= self.distance_threshold:
             # self.grasp()
@@ -290,6 +290,21 @@ class RobotEnv():
         object_pose.pose.position.x = object_position[0]
         object_pose.pose.position.y = object_position[1]
         object_pose.pose.position.z = object_position[2]
+
+        print "########################"
+        print "########################"
+        print "########################"
+        print "########################"
+        print "########################"
+
+        print object_position
+        print self.get_object_shape()
+
+        print "########################"
+        print "########################"
+        print "########################"
+        print "########################"
+        print "########################"
         self.scene.add_box('object_id', object_pose, size = (self.get_object_shape()[0], self.get_object_shape()[1], self.get_object_shape()[2]))
 
     def open_gripper(self, pre_grasp_posture):
@@ -347,3 +362,5 @@ class RobotEnv():
         self.arm.set_support_surface_name('table_top')
 
         self.arm.pick('object_id', [grasp_msg])
+        # self = RobotEnv()
+        # self.reset()

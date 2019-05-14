@@ -30,14 +30,14 @@ from panda_manipulation.MyObject import MyObject, Sphere, Box, Cylinder, Duck, B
 class RobotEnv():
     def __init__(self):
         self.object_shape = [0.2, 0.04, 0.04]
-        self.object_position = [0.4, -0.15, 0.73 + self.object_shape[2]/2] #fixed z=0.73 (table_height + table_thickness + object_shape/2)
+        self.object_position = [0.3, -0.15, 0.73 + self.object_shape[2]/2] #fixed z=0.73 (table_height + table_thickness + object_shape/2)
         self.object = Box()
         self.arm_joint_indices_to_use = [1, 3, 5]
-        self.action_step_size = 0.1
+        self.action_step_size = 0.02
         self.distance_threshold = 0.02
-        self.object_offset = np.array([0.0, 0.0, 0.02])
-        self.object_move_threshold = 0.05
-        
+        self.object_offset = np.array([0.0, 0.0, 0.01])
+        self.object_move_threshold = 0.02
+
         self.scene = moveit_commander.PlanningSceneInterface()
 
         self.robot = moveit_commander.RobotCommander()
@@ -55,9 +55,9 @@ class RobotEnv():
         self.arm_joint_names = ['panda_joint1', 'panda_joint2', 'panda_joint3', 'panda_joint4', 'panda_joint5', 'panda_joint6', 'panda_joint7']
         self.arm_joint_values = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
         self.arm_joint_limits = {'panda_joint1' : [-1.4, 1.4],
-                                 'panda_joint2' :  [0.0, 1.2],
+                                 'panda_joint2' :  [-0.6, 1.2],
                                  'panda_joint3' : [-1.4, 1.4],
-                                 'panda_joint4' : [-3.0, 0.0],
+                                 'panda_joint4' : [-2.8, 0.0],
                                  'panda_joint5' : [-2.8, 0.0],
                                  'panda_joint6' :  [0.0, 3.6],
                                  'panda_joint7' : [-2.8, 2.8]}
@@ -138,8 +138,8 @@ class RobotEnv():
     def initialize_arm_joint_values(self):
         return [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
 
-    def initialize_hand_joint_values(self):
-        return [0.0, 0.0]
+    # def initialize_hand_joint_values(self):
+    #     return [0.0, 0.0]
 
     # def random_initialize_arm_joint_values(self):
     #     return np.random.uniform(self.get_arm_joint_lower_limits(), self.get_arm_joint_upper_limits(), len(self.arm_joint_values)).tolist()
@@ -156,31 +156,31 @@ class RobotEnv():
     #             print "Time is up!"
     #             break
 
-    def plan(self, arm_new_joint_values, hand_new_joint_values):
+    def plan(self, arm_new_joint_values):
         arm_plan = self.arm.plan(arm_new_joint_values)
-        hand_plan = self.hand.plan(hand_new_joint_values)
+        # hand_plan = self.hand.plan(hand_new_joint_values)
         if (len(arm_plan.joint_trajectory.points) == 0):
             arm_plan = None
-        if (len(hand_plan.joint_trajectory.points) == 0):
-            hand_plan = None
-        return (arm_plan, hand_plan)
+        # if (len(hand_plan.joint_trajectory.points) == 0):
+        #     hand_plan = None
+        return arm_plan
 
     def arm_execute(self, arm_plan):
         self.arm.execute(arm_plan)
 
-    def hand_execute(self, hand_plan):
-        self.hand.execute(hand_plan)
+    # def hand_execute(self, hand_plan):
+    #     self.hand.execute(hand_plan)
 
-    def plan_and_execute(self, arm_new_joint_values, hand_new_joint_values):
-        arm_plan, hand_plan = self.plan(arm_new_joint_values, hand_new_joint_values)
+    def plan_and_execute(self, arm_new_joint_values):
+        arm_plan = self.plan(arm_new_joint_values)
         if (arm_plan is not None):
             self.arm_execute(arm_plan)
             self.arm_joint_values = arm_new_joint_values
-
-        if (hand_plan is not None):
-            self.hand_execute(hand_plan)
-            self.hand_joint_values = hand_new_joint_values
-        return (arm_plan, hand_plan)
+        #
+        # if (hand_plan is not None):
+        #     self.hand_execute(hand_plan)
+        #     self.hand_joint_values = hand_new_joint_values
+        return arm_plan
 
     def reset(self):
         object_pose = geometry_msgs.msg.Pose()
@@ -195,10 +195,10 @@ class RobotEnv():
         self.create_planning_scene()
         rospy.sleep(2)
         self.object_initial_position = self.get_object_position()
-        
+
         arm_new_joint_values = self.initialize_arm_joint_values()
-        hand_new_joint_values = self.initialize_hand_joint_values()
-        self.plan_and_execute(arm_new_joint_values, hand_new_joint_values)
+        # hand_new_joint_values = self.initialize_hand_joint_values()
+        self.plan_and_execute(arm_new_joint_values)
 
         #        return np.concatenate((np.concatenate((self.arm_joint_values, self.hand_joint_values), axis=0), self.get_gripper_position('world'), self.object_initial_position), axis=0).tolist()
         return [self.arm_joint_values[i] for i in self.arm_joint_indices_to_use]
@@ -231,13 +231,13 @@ class RobotEnv():
         curr_distance = self.get_distance_between_gripper_and_object()
 
         arm_new_joint_values = np.clip(list(map(add, self.arm_joint_values, arm_action)), self.get_arm_joint_lower_limits(), self.get_arm_joint_upper_limits())
-        hand_new_joint_values = self.hand_joint_values
+        # hand_new_joint_values = self.hand_joint_values
 
-        arm_check_plan, hand_check_plan = self.plan_and_execute(arm_new_joint_values, hand_new_joint_values)
+        arm_check_plan = self.plan_and_execute(arm_new_joint_values)
 
 #        self.hand_joint_values = np.clip(self.hand_joint_values + hand_action, self.get_hand_joint_lower_limits(), self.get_hand_joint_upper_limits())
 
-        if (arm_check_plan is not None) and (hand_check_plan is not None):
+        if (arm_check_plan is not None):
             successful_planning = True
         else:
             successful_planning = False
@@ -247,7 +247,7 @@ class RobotEnv():
         # Reward definition
         # reward = -(next_distance**2) + (0.5 * ((next_distance - curr_distance)**2))
 
-        reward = curr_distance - 2 * next_distance - 1
+        reward = curr_distance - next_distance - 1
 
         if next_distance <= self.distance_threshold:
             # self.grasp()
@@ -292,7 +292,7 @@ class RobotEnv():
         object_pose.pose.position.y = object_position[1]
         object_pose.pose.position.z = object_position[2]
         self.scene.add_box('object_id', object_pose, size = (self.get_object_shape()[0], self.get_object_shape()[1], self.get_object_shape()[2]))
-        
+
     def open_gripper(self, pre_grasp_posture):
         pre_grasp_posture.joint_names = self.hand_joint_names
         pre_grasp_posture.points = [JointTrajectoryPoint()]
@@ -348,3 +348,5 @@ class RobotEnv():
         self.arm.set_support_surface_name('table_top')
 
         self.arm.pick('object_id', [grasp_msg])
+        # self = RobotEnv()
+        # self.reset()

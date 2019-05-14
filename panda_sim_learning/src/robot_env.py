@@ -28,8 +28,8 @@ class RobotEnv():
         self.object = Box()
         self.arm_joint_indices_to_use = [1, 3, 5]
         self.action_step_size = 0.05
-        self.distance_threshold = 0.1
-        self.object_offset = np.array([0.0, 0.0, 0.05])
+        self.distance_threshold = 0.025
+        self.object_offset = np.array([0.0, 0.0, 0.025])
         self.object_move_threshold = 0.05
 
         self.robot = moveit_commander.RobotCommander()
@@ -40,7 +40,7 @@ class RobotEnv():
         self.arm_joint_names = ['panda_joint1', 'panda_joint2', 'panda_joint3', 'panda_joint4', 'panda_joint5', 'panda_joint6', 'panda_joint7']
         self.arm_joint_values = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
         self.arm_joint_limits = {'panda_joint1' : [-1.4, 1.4],
-                                 'panda_joint2' : [-1.0, 1.2],
+                                 'panda_joint2' :  [0.0, 1.2],
                                  'panda_joint3' : [-1.4, 1.4],
                                  'panda_joint4' : [-3.0, 0.0],
                                  'panda_joint5' : [-2.8, 0.0],
@@ -52,9 +52,21 @@ class RobotEnv():
                                   'panda_finger_joint2' : [-0.001, 0.04]}
 
         self.state_dim = len(self.arm_joint_indices_to_use)
-        self.action_dim = 2**len(self.arm_joint_indices_to_use)
+        self.action_dim = 2**len(self.arm_joint_indices_to_use) # 2*len(self.arm_joint_indices_to_use)
         self.action_space = spaces.Discrete(self.action_dim)
+
         self.actions = {}
+        # for action_no in range(2*len(self.arm_joint_indices_to_use)):
+        #     if action_no % 2 == 0:
+        #         coefficient = +self.action_step_size
+        #     else:
+        #         coefficient = -self.action_step_size
+        #     joint_index = self.arm_joint_indices_to_use[int(action_no/2)]
+        #     action_list = np.zeros(7).tolist()
+        #     action_list[joint_index] = coefficient
+        #     self.actions[action_no] = action_list
+        # print self.actions
+
         for action_no in range(self.action_dim):
             binary_action_no = np.array(self.change_base(action_no, 2, self.state_dim))
             binary_action_no = 1 - 2 * binary_action_no
@@ -63,6 +75,7 @@ class RobotEnv():
                 action_list[index] = coefficient * self.action_step_size
             self.actions[action_no] = action_list
         print self.actions
+
         self.tf_buffer = tf2_ros.Buffer(rospy.Duration(1200.0))
         self.tf_listener = tf2_ros.TransformListener(self.tf_buffer)
 
@@ -94,7 +107,7 @@ class RobotEnv():
     #     return self.hand.get_current_pose()
 
     def get_gripper_position(self):
-        tf = self.tf_buffer.lookup_transform('world', 'panda_hand', rospy.Time(0), rospy.Duration(10.0))
+        tf = self.tf_buffer.lookup_transform('world', 'panda_rightfinger', rospy.Time(0), rospy.Duration(10.0))
         return np.array([tf.transform.translation.x, tf.transform.translation.y, tf.transform.translation.z])
 
     def get_object_position(self):
@@ -160,7 +173,7 @@ class RobotEnv():
 
         object_pose = geometry_msgs.msg.Pose()
         object_pose.position.x = 0.3
-        object_pose.position.y = 0.0
+        object_pose.position.y = -0.15
         object_pose.position.z = 0.8
         self.object.set_position(object_pose)
         self.object.place_on_table()
@@ -203,7 +216,6 @@ class RobotEnv():
 
 #        self.hand_joint_values = np.clip(self.hand_joint_values + hand_action, self.get_hand_joint_lower_limits(), self.get_hand_joint_upper_limits())
 
-
         if (arm_check_plan is not None) and (hand_check_plan is not None):
             successful_planning = True
         else:
@@ -212,24 +224,32 @@ class RobotEnv():
 #        self.wait(0.01, 300)
         next_distance = self.get_distance_between_gripper_and_object()
         # Reward definition
-#         reward = -(next_distance**2) + (0.5 * ((next_distance - curr_distance)**2))
+        # reward = -(next_distance**2) + (0.5 * ((next_distance - curr_distance)**2))
 
-        reward = 1 / next_distance
+        reward = curr_distance - next_distance - 1
 
-        if not successful_planning:
-            reward -= 1
-        elif next_distance <= self.distance_threshold:
+        if next_distance <= self.distance_threshold:
             reward += 100
             done = True
+        elif not successful_planning:
+            reward -= 5
         elif self.get_object_position()[2] < 0.5:
-            reward -= 10
-            done = True
-        elif np.linalg.norm(self.get_object_position() - self.object_initial_position) >= self.object_move_threshold:
-            reward -= 10
+            reward -= 100
             done = True
         elif self.get_gripper_position()[2] < 0.7:
-            reward -= 10
+            reward -= 100
             done = True
+        elif np.linalg.norm(self.get_object_position() - self.object_initial_position) >= self.object_move_threshold:
+            reward -= 5
+        # elif self.get_object_position()[2] < 0.5:
+        #     reward -= 10
+        #     done = True
+        # elif np.linalg.norm(self.get_object_position() - self.object_initial_position) >= self.object_move_threshold:
+        #     reward -= 10
+        #     done = True
+        # elif self.get_gripper_position()[2] < 0.7:
+        #     reward -= 10
+        #     done = True
         next_state = [self.arm_joint_values[i] for i in self.arm_joint_indices_to_use]
 #        next_state = np.concatenate((np.concatenate((self.arm_joint_values, self.hand_joint_values), axis=0), self.get_gripper_position('world'), self.get_object_position()), axis=0).tolist()
 #        after_data = rospy.wait_for_message('/baris/features', PcFeatures)

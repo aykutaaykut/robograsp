@@ -15,29 +15,85 @@ import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 
+EPISODES = 1000
+TIME_STEPS = 100
+SAVE_NETWORK = True
+LOAD_NETWORK = False
+LOAD_FILE = ''
+
 LOG_DIR = '/home/' + pwd.getpwuid(os.getuid())[0] + '/catkin_ws/src/dqn_log/'
 LOG_FILE = 'dqn_log_' + str(datetime.datetime.now()) + '.txt'
 MODEL_DIR = '/home/' + pwd.getpwuid(os.getuid())[0] + '/catkin_ws/src/dqn_models/' + str(datetime.datetime.now()) + '/'
-
-EPISODES = 1000
-TIME_STEPS = 100
-MEMORY_SIZE = 20000
-LR = 0.001
-DISCOUNT = 0.95
-EPSILON = 0.6
-EPSILON_DECAY = 0.995
-EPSILON_MIN = 0.001
-BATCH_SIZE = 32
-
-#LOAD_FILE name inside ~/catkin_ws/src/dqn_models/
-SAVE_NETWORK = False
-LOAD_NETWORK = False
-LOAD_FILE = ''
 
 def log(str):
     with open(LOG_DIR + LOG_FILE, 'a+') as f:
         f.write(str + '\n')
 
+if __name__ == '__main__':
+    moveit_commander.roscpp_initialize(sys.argv)
+    rospy.init_node('robot_env', anonymous = True)
+    rospy.sleep(1)
+
+    env = RobotEnv()
+    env.reset()
+    state_dim = env.state_dim
+    action_dim = env.action_dim
+    dqn_agent = Agent(state_dim, action_dim)
+
+    LOAD_PATH = MODEL_DIR + LOAD_FILE
+    try:
+        if LOAD_NETWORK:
+            dqn_agent.load_network(LOAD_PATH)
+            print '#################### MODEL IS LOADED SUCCESSFULLY! ####################'
+    except:
+        print '#################### NO SUCH FILE TO LOAD: ' + LOAD_PATH
+        raise
+
+    reward_list = []
+
+    for e in range(1, EPISODES+1):
+        dist_list = []
+        log('###################################################')
+        log('#################### EPISODE ' + str(e) + ' ' + '#'*(20-int(math.log(e, 10))))
+        log('###################################################')
+        state = env.reset()
+        state = np.reshape(state, [1, state_dim])
+        total_reward = 0
+        for t in range(1, TIME_STEPS+1):
+            action = dqn_agent.act(state)
+            log('############### ITERATION ' + str(t) + ' ' + '#'*(15-int(math.log(t, 10))))
+            state_next, reward, terminal, info, next_distance = env.step(action)
+            total_reward += reward
+            dist_list.append(next_distance)
+            state_next = np.reshape(state_next, [1, state_dim])
+            log('State: ' + str(state))
+            log('Action: ' + str(action))
+            log('Reward: ' + str(reward))
+            log('Next State: ' + str(state_next))
+            log('Done: ' + str(terminal))
+            dqn_agent.remember(state, action, reward, state_next, terminal)
+            state = state_next
+            if terminal:
+                log('##### END || episode: ' + str(e) + ' || time: ' + str(t) + ' || score: ' + str(total_reward))
+                break
+            dqn_agent.experience_replay()
+            # if SAVE_NETWORK and e%10 == 0 and t%100 == 0:
+            #     SAVE_PATH = MODEL_DIR + 'model_e_' + str(e) + '_t_' + str(t) + '.h5'
+            #     dqn_agent.save_network(SAVE_PATH)
+        plt.figure()
+        plt.plot(dist_list)
+        plt.savefig(LOG_DIR + 'distance_figs/distance_' + str(e) + '.jpg')
+        plt.close()
+        reward_list.append(total_reward)
+        with open(LOG_DIR + 'reward_list.txt', 'a+') as f:
+            f.write(str(total_reward) + '\n')
+
+    plt.figure()
+    plt.plot(reward_list)
+    plt.savefig(LOG_DIR + 'reward.jpg')
+    plt.close()
+
+"""
 if __name__ == '__main__':
     moveit_commander.roscpp_initialize(sys.argv)
     rospy.init_node('robot_env', anonymous = True)
@@ -49,7 +105,7 @@ if __name__ == '__main__':
     env.reset()
     state_dim = env.state_dim
     action_dim = env.action_dim
-    dqn_agent = Agent(state_dim = state_dim, action_dim = action_dim, memory_size = MEMORY_SIZE, lr = LR, discount = DISCOUNT, epsilon = EPSILON, epsilon_decay = EPSILON_DECAY, epsilon_min = EPSILON_MIN, batch_size = BATCH_SIZE)
+    dqn_agent = Agent(state_dim, action_dim)
     LOAD_PATH = MODEL_DIR + LOAD_FILE
     try:
         if LOAD_NETWORK:
@@ -87,7 +143,7 @@ if __name__ == '__main__':
                 dqn_agent.experience_replay()
             if done:
                 log('##### END || episode: ' + str(e) + ' || time: ' + str(t) + ' || score: ' + str(total_reward))
-                log('##### DQN Agent:\n' + dqn_agent.self_print())
+                # log('##### DQN Agent:\n' + dqn_agent.self_print())
                 break
             if SAVE_NETWORK and e%10 == 0 and t%100 == 0:
                 SAVE_PATH = MODEL_DIR + 'model_e_' + str(e) + '_t_' + str(t) + '.h5'
@@ -108,3 +164,4 @@ if __name__ == '__main__':
     plt.close()
 
 #    roscpp_shutdown()
+"""

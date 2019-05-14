@@ -30,13 +30,15 @@ from panda_manipulation.MyObject import MyObject, Sphere, Box, Cylinder, Duck, B
 class RobotEnv():
     def __init__(self):
         self.object_shape = [0.2, 0.04, 0.04]
-        self.object_position = [0.4, -0.15, 0.736] #fixed z=0.736 (table_height + table_thickness)
+        self.object_position = [0.4, -0.15, 0.73 + self.object_shape[2]/2] #fixed z=0.73 (table_height + table_thickness + object_shape/2)
         self.object = Box()
         self.arm_joint_indices_to_use = [1, 3, 5]
         self.action_step_size = 0.1
         self.distance_threshold = 0.02
         self.object_offset = np.array([0.0, 0.0, 0.02])
         self.object_move_threshold = 0.05
+        
+        self.scene = moveit_commander.PlanningSceneInterface()
 
         self.robot = moveit_commander.RobotCommander()
 
@@ -187,10 +189,13 @@ class RobotEnv():
         object_pose.position.z = self.object_position[2]
         self.object.set_position(object_pose)
         self.object.place_on_table()
-        rospy.sleep(1)
+        rospy.sleep(2)
+        self.scene.remove_attached_object('panda_hand')
+        self.scene = moveit_commander.PlanningSceneInterface()
         self.create_planning_scene()
+        rospy.sleep(2)
         self.object_initial_position = self.get_object_position()
-
+        
         arm_new_joint_values = self.initialize_arm_joint_values()
         hand_new_joint_values = self.initialize_hand_joint_values()
         self.plan_and_execute(arm_new_joint_values, hand_new_joint_values)
@@ -280,18 +285,14 @@ class RobotEnv():
     #     rospy.signal_shutdown("done")
 
     def create_planning_scene(self):
-        self.scene = moveit_commander.PlanningSceneInterface()
-
-        rospy.sleep(2)
-
-        object_position = self.get_object_position()
         object_pose = PoseStamped()
         object_pose.header.frame_id = self.robot.get_planning_frame()
+        object_position = self.get_object_position()
         object_pose.pose.position.x = object_position[0]
         object_pose.pose.position.y = object_position[1]
         object_pose.pose.position.z = object_position[2]
         self.scene.add_box('object_id', object_pose, size = (self.get_object_shape()[0], self.get_object_shape()[1], self.get_object_shape()[2]))
-
+        
     def open_gripper(self, pre_grasp_posture):
         pre_grasp_posture.joint_names = self.hand_joint_names
         pre_grasp_posture.points = [JointTrajectoryPoint()]

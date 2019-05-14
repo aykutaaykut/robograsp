@@ -19,6 +19,7 @@
         <link name="panda_link6" />
         <link name="panda_link7" />
         <link name="panda_link8" />
+        <link name="panda_hand" />
         <joint name="panda_joint1" />
         <joint name="panda_joint2" />
         <joint name="panda_joint3" />
@@ -27,7 +28,8 @@
         <joint name="panda_joint6" />
         <joint name="panda_joint7" />
         <joint name="panda_joint8" />
-        <chain base_link="panda_link0" tip_link="panda_link8" />
+        <joint name="panda_hand_joint" />
+        <chain base_link="panda_link0" tip_link="panda_hand" />
     </group>
     <group name="panda_arm_hand">
         <link name="panda_link0" />
@@ -96,7 +98,7 @@
         <joint name="panda_joint7" value="0.785" />
     </group_state>
     <!--END EFFECTOR: Purpose: Represent information about an end effector.-->
-    <end_effector name="hand" parent_link="panda_hand" group="hand" parent_group="panda_arm_hand" />
+    <end_effector name="hand" parent_link="panda_hand" group="hand" parent_group="panda_arm" />
     <!--VIRTUAL JOINT: Purpose: this element defines a virtual joint between a robot link and an external frame of reference (considered fixed with respect to the robot)-->
     <virtual_joint name="FixedBase" type="fixed" parent_frame="world" child_link="world" />
     <!--DISABLE COLLISIONS: By default it is assumed that any link of the robot could potentially come into collision with any other link in the robot. This tag disables collision checking between a specified pair of links. -->

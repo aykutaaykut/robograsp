@@ -1,15 +1,15 @@
-<robot name="basic_box">
-<link name="box_link">
+<robot name="basic_cube">
+<link name="cube_link">
     <visual>
       <origin xyz="0 0 0" rpy="0 0 0" />
       <geometry>
-        <box size="0.02 0.02 0.02"/>
+        <box size="0.2 0.04 0.04"/>
       </geometry>
     </visual>
     <collision>
       <origin xyz="0 0 0" rpy="0 0 0" />
       <geometry>
-        <box size="0.02 0.02 0.02"/>
+        <box size="0.2 0.04 0.04"/>
       </geometry>
     </collision>
     <inertial>
@@ -18,7 +18,7 @@
       <inertia ixx="0.00001667" ixy="0.0" ixz="0.0" iyy="0.00001667" iyz="0.0" izz="0.00001667"/>
     </inertial>
   </link>
-  <gazebo reference="box_link">
+  <gazebo reference="cube_link">
     <mu1>10</mu1>
     <mu2>10</mu2>
     <material>Gazebo/Red</material>

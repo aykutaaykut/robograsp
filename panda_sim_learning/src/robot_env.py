@@ -35,7 +35,7 @@ class RobotEnv():
         self.arm_joint_indices_to_use = [1, 3, 5]
         self.action_step_size = 0.02
         self.distance_threshold = 0.02
-        self.object_offset = np.array([0.0, 0.0, 0.01])
+        self.object_offset = np.array([0.0, 0.0, self.object_shape[2]/2])
         self.object_move_threshold = 0.02
 
         self.scene = moveit_commander.PlanningSceneInterface()
@@ -133,6 +133,12 @@ class RobotEnv():
         gripper_position = self.get_gripper_position()
         object_position = self.get_object_position()
         return np.linalg.norm(gripper_position - (object_position + self.object_offset))
+    
+    def is_gripper_over_object(self):
+        gripper_position = self.get_gripper_position()
+        object_position = self.get_object_position()
+        object_shape = self.get_object_shape()
+        return (abs(gripper_position[0] - object_position[0]) < (object_shape[0]/2.0)) and (abs(gripper_position[1] - object_position[1]) < (object_shape[1]/2.0))
 
     def initialize_arm_joint_values(self):
         return [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]

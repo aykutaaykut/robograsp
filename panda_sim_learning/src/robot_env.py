@@ -33,10 +33,10 @@ class RobotEnv():
         self.object_position = [0.3, -0.15, 0.73 + self.object_shape[2]/2] #fixed z=0.73 (table_height + table_thickness + object_shape/2)
         self.object = Box()
         self.arm_joint_indices_to_use = [1, 3, 5]
-        self.action_step_size = 0.02
-        self.distance_threshold = 0.02
-        self.object_offset = np.array([0.0, 0.0, 0.01])
-        self.object_move_threshold = 0.02
+        self.action_step_size = 0.025
+        self.distance_threshold = 0.025
+        self.object_offset = np.array([0.0, 0.0, 0.02])
+        self.object_move_threshold = 0.025
 
         self.scene = moveit_commander.PlanningSceneInterface()
 
@@ -246,7 +246,7 @@ class RobotEnv():
         # Reward definition
         # reward = -(next_distance**2) + (0.5 * ((next_distance - curr_distance)**2))
 
-        reward = curr_distance - next_distance - 1
+        reward = 10*(curr_distance - next_distance) - 1
 
         if next_distance <= self.distance_threshold:
             # self.grasp()

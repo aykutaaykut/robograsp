@@ -16,7 +16,7 @@ matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 
 EPISODES = 1000
-TIME_STEPS = 100
+TIME_STEPS = 300
 SAVE_NETWORK = True
 LOAD_NETWORK = False
 LOAD_FILE = ''

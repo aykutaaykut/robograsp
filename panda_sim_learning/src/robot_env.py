@@ -35,7 +35,7 @@ class RobotEnv():
         self.arm_joint_indices_to_use = [1, 3, 5]
         self.action_step_size = 0.025
         self.distance_threshold = 0.025
-        self.object_offset = np.array([0.0, 0.0, 0.02])
+        self.object_offset = np.array([0.0, 0.0, self.object_shape[2]/2])
         self.object_move_threshold = 0.025
 
         self.scene = moveit_commander.PlanningSceneInterface()
@@ -134,11 +134,17 @@ class RobotEnv():
         object_position = self.get_object_position()
         return np.linalg.norm(gripper_position - (object_position + self.object_offset))
 
+    def is_gripper_over_object(self):
+        gripper_position = self.get_gripper_position()
+        object_position = self.get_object_position()
+        object_shape = self.get_object_shape()
+        return (abs(gripper_position[0] - object_position[0]) < (object_shape[0]/2.0)) and (abs(gripper_position[1] - object_position[1]) < (object_shape[1]/2.0))
+
     def initialize_arm_joint_values(self):
         return [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
 
-    # def initialize_hand_joint_values(self):
-    #     return [0.0, 0.0]
+    def initialize_hand_joint_values(self):
+        return [0.0, 0.0]
 
     # def random_initialize_arm_joint_values(self):
     #     return np.random.uniform(self.get_arm_joint_lower_limits(), self.get_arm_joint_upper_limits(), len(self.arm_joint_values)).tolist()
@@ -155,31 +161,31 @@ class RobotEnv():
     #             print "Time is up!"
     #             break
 
-    def plan(self, arm_new_joint_values):
+    def plan(self, arm_new_joint_values, hand_new_joint_values):
         arm_plan = self.arm.plan(arm_new_joint_values)
-        # hand_plan = self.hand.plan(hand_new_joint_values)
+        hand_plan = self.hand.plan(hand_new_joint_values)
         if (len(arm_plan.joint_trajectory.points) == 0):
             arm_plan = None
-        # if (len(hand_plan.joint_trajectory.points) == 0):
-        #     hand_plan = None
-        return arm_plan
+        if (len(hand_plan.joint_trajectory.points) == 0):
+            hand_plan = None
+        return arm_plan, hand_plan
 
     def arm_execute(self, arm_plan):
         self.arm.execute(arm_plan)
 
-    # def hand_execute(self, hand_plan):
-    #     self.hand.execute(hand_plan)
+    def hand_execute(self, hand_plan):
+        self.hand.execute(hand_plan)
 
-    def plan_and_execute(self, arm_new_joint_values):
-        arm_plan = self.plan(arm_new_joint_values)
+    def plan_and_execute(self, arm_new_joint_values, hand_new_joint_values):
+        arm_plan, hand_plan = self.plan(arm_new_joint_values, hand_new_joint_values)
         if (arm_plan is not None):
             self.arm_execute(arm_plan)
             self.arm_joint_values = arm_new_joint_values
-        #
-        # if (hand_plan is not None):
-        #     self.hand_execute(hand_plan)
-        #     self.hand_joint_values = hand_new_joint_values
-        return arm_plan
+
+        if (hand_plan is not None):
+            self.hand_execute(hand_plan)
+            self.hand_joint_values = hand_new_joint_values
+        return arm_plan, hand_plan
 
     def reset(self):
         object_pose = geometry_msgs.msg.Pose()
@@ -196,8 +202,8 @@ class RobotEnv():
         self.object_initial_position = self.get_object_position()
 
         arm_new_joint_values = self.initialize_arm_joint_values()
-        # hand_new_joint_values = self.initialize_hand_joint_values()
-        self.plan_and_execute(arm_new_joint_values)
+        hand_new_joint_values = self.initialize_hand_joint_values()
+        self.plan_and_execute(arm_new_joint_values, hand_new_joint_values)
 
         #        return np.concatenate((np.concatenate((self.arm_joint_values, self.hand_joint_values), axis=0), self.get_gripper_position('world'), self.object_initial_position), axis=0).tolist()
         return [self.arm_joint_values[i] for i in self.arm_joint_indices_to_use]
@@ -230,13 +236,13 @@ class RobotEnv():
         curr_distance = self.get_distance_between_gripper_and_object()
 
         arm_new_joint_values = np.clip(list(map(add, self.arm_joint_values, arm_action)), self.get_arm_joint_lower_limits(), self.get_arm_joint_upper_limits())
-        # hand_new_joint_values = self.hand_joint_values
+        hand_new_joint_values = self.hand_joint_values
 
-        arm_check_plan = self.plan_and_execute(arm_new_joint_values)
+        arm_check_plan, hand_check_plan = self.plan_and_execute(arm_new_joint_values, hand_new_joint_values)
 
 #        self.hand_joint_values = np.clip(self.hand_joint_values + hand_action, self.get_hand_joint_lower_limits(), self.get_hand_joint_upper_limits())
 
-        if (arm_check_plan is not None):
+        if (arm_check_plan is not None) and (hand_check_plan is not None):
             successful_planning = True
         else:
             successful_planning = False
@@ -249,7 +255,7 @@ class RobotEnv():
         reward = 10*(curr_distance - next_distance) - 1
 
         if next_distance <= self.distance_threshold:
-            # self.grasp()
+#            self.grasp()
             reward += 200
             done = True
         elif not successful_planning:
@@ -328,7 +334,7 @@ class RobotEnv():
         grasp_msg.pre_grasp_approach.direction.header.frame_id = self.robot.get_planning_frame()
         grasp_msg.pre_grasp_approach.direction.vector.x = 0.0
         grasp_msg.pre_grasp_approach.direction.vector.y = 0.0
-        grasp_msg.pre_grasp_approach.direction.vector.z = -1.0
+        grasp_msg.pre_grasp_approach.direction.vector.z = -0.4
         grasp_msg.pre_grasp_approach.min_distance = 0.095
         grasp_msg.pre_grasp_approach.desired_distance = 0.115
 

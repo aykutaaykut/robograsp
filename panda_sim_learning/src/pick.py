@@ -10,16 +10,13 @@ if __name__ == '__main__':
     moveit_commander.roscpp_initialize(sys.argv)
     rospy.init_node('pick_py', anonymous = True)
     rospy.sleep(1)
-    
+
     env = RobotEnv()
-#    while True:
-    env.reset()
-    env.step(0)
-    env.grasp()
-    env.step(0)
-    env.step(0)
-
-
-
-
-
+    while True:
+        env.reset()
+        env.step(2)
+        env.step(2)
+        env.step(2)
+        env.step(2)
+        env.step(2)
+        env.grasp()

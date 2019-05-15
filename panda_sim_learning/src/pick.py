@@ -12,11 +12,17 @@ if __name__ == '__main__':
     rospy.sleep(1)
 
     env = RobotEnv()
+    env.reset()
+#    env.grasp()
     while True:
-        env.reset()
+        next_distance = env.get_distance_between_gripper_and_object()
+        if next_distance <= 0.03:
+            env.grasp()
+            rospy.sleep(10)
+            env.reset()
         env.step(2)
-        env.step(2)
-        env.step(2)
-        env.step(2)
-        env.step(2)
-        env.grasp()
+#        env.step(2)
+#        env.step(2)
+#        env.step(2)
+#        env.step(2)
+#    env.grasp()

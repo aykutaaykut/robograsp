@@ -9,6 +9,7 @@ import datetime
 import numpy as np
 import rospy
 import moveit_commander
+from keras.models import load_model
 from robot_env import RobotEnv
 from dqn import Agent
 import matplotlib
@@ -19,7 +20,7 @@ EPISODES = 1000
 TIME_STEPS = 300
 SAVE_NETWORK = True
 LOAD_NETWORK = False
-LOAD_FILE = ''
+LOAD_PATH = '/home/' + pwd.getpwuid(os.getuid())[0] + '/catkin_ws/src/dqn_models/2019-05-16 11:47:11.009540/model_e_2_t_300.h5'
 
 LOG_DIR = '/home/' + pwd.getpwuid(os.getuid())[0] + '/catkin_ws/src/dqn_log/'
 LOG_FILE = 'dqn_log_' + str(datetime.datetime.now()) + '.txt'
@@ -40,14 +41,16 @@ if __name__ == '__main__':
     action_dim = env.action_dim
     dqn_agent = Agent(state_dim, action_dim)
 
-    LOAD_PATH = MODEL_DIR + LOAD_FILE
-    try:
-        if LOAD_NETWORK:
-            dqn_agent.load_network(LOAD_PATH)
+    if SAVE_NETWORK:
+        os.mkdir(MODEL_DIR)
+
+    if LOAD_NETWORK:
+        try:
+            dqn_agent.model = load_model(LOAD_PATH)
             print '#################### MODEL IS LOADED SUCCESSFULLY! ####################'
-    except:
-        print '#################### NO SUCH FILE TO LOAD: ' + LOAD_PATH
-        raise
+        except:
+            print '#################### NO SUCH FILE TO LOAD: ' + LOAD_PATH
+            raise Exception("No such file to load")
 
     reward_list = []
 
@@ -77,9 +80,9 @@ if __name__ == '__main__':
                 log('##### END || episode: ' + str(e) + ' || time: ' + str(t) + ' || score: ' + str(total_reward))
                 break
             dqn_agent.experience_replay()
-            # if SAVE_NETWORK and e%10 == 0 and t%100 == 0:
-            #     SAVE_PATH = MODEL_DIR + 'model_e_' + str(e) + '_t_' + str(t) + '.h5'
-            #     dqn_agent.save_network(SAVE_PATH)
+            if SAVE_NETWORK and e%10 == 0 and t%100 == 0:
+                SAVE_PATH = MODEL_DIR + 'model_e_' + str(e) + '_t_' + str(t) + '.h5'
+                dqn_agent.model.save(SAVE_PATH)
         plt.figure()
         plt.plot(dist_list)
         plt.savefig(LOG_DIR + 'distance_figs/distance_' + str(e) + '.jpg')

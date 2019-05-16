@@ -66,16 +66,16 @@ if __name__ == '__main__':
         total_reward = 0
         for t in range(1, TIME_STEPS+1):
             action = dqn_agent.act(state)
-            log('############### ITERATION ' + str(t) + ' ' + '#'*(15-int(math.log(t, 10))))
+            # log('############### ITERATION ' + str(t) + ' ' + '#'*(15-int(math.log(t, 10))))
             state_next, reward, terminal, info, next_distance, successful_grasping = env.step(action)
             total_reward += reward
             dist_list.append(next_distance)
             state_next = np.reshape(state_next, [1, state_dim])
-            log('State: ' + str(state))
-            log('Action: ' + str(action))
-            log('Reward: ' + str(reward))
-            log('Next State: ' + str(state_next))
-            log('Done: ' + str(terminal))
+            # log('State: ' + str(state))
+            # log('Action: ' + str(action))
+            # log('Reward: ' + str(reward))
+            # log('Next State: ' + str(state_next))
+            # log('Done: ' + str(terminal))
             dqn_agent.remember(state, action, reward, state_next, terminal)
             state = state_next
 

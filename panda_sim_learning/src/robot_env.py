@@ -237,7 +237,11 @@ class RobotEnv():
         self.object_initial_position = self.get_object_position()
 
         #        return np.concatenate((np.concatenate((self.arm_joint_values, self.hand_joint_values), axis=0), self.get_gripper_position('world'), self.object_initial_position), axis=0).tolist()
-        return [self.arm_joint_values[i] for i in self.arm_joint_indices_to_use]
+        state = [self.arm_joint_values[i] for i in self.arm_joint_indices_to_use]
+        object_state = [0, 0, 0, 0]
+        object_state[self.object_type] = 1
+        state = state + object_state
+        return state
 
     def transform(self, coordinates):
         transform = self.tf_buffer.lookup_transform('panda_link0', 'camera_depth_optical_frame', rospy.Time(0), rospy.Duration(1.0))

@@ -41,6 +41,9 @@ class MyObject(object):
 
     def get_position(self):
         return self.gazebo_interface.get_object_pose(self.name)
+    
+    def delete(self):
+        return self.gazebo_interface.delete_object(self.name)
 
 class Sphere(MyObject):
     def __init__(self):

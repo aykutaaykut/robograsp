@@ -83,9 +83,9 @@ if __name__ == '__main__':
                 log('##### END || episode: ' + str(e) + ' || time: ' + str(t) + ' || score: ' + str(total_reward) + ' || grasp_success: ' + str(successful_grasping))
                 break
             dqn_agent.experience_replay()
-            if SAVE_NETWORK and e%10 == 0 and t%100 == 0:
-                SAVE_PATH = MODEL_DIR + 'model_e_' + str(e) + '_t_' + str(t) + '.h5'
-                dqn_agent.model.save(SAVE_PATH)
+        if SAVE_NETWORK and e%10 == 0:
+            SAVE_PATH = MODEL_DIR + 'model_e_' + str(e) + '.h5'
+            dqn_agent.model.save(SAVE_PATH)
         plt.figure()
         plt.plot(dist_list)
         plt.savefig(LOG_DIR + 'distance_figs/distance_' + str(e) + '.jpg')

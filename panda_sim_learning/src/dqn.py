@@ -20,7 +20,7 @@ EXPLORATION_MIN = 0.01
 EXPLORATION_DECAY = 0.995
 
 
-class Agent:
+class Agent(object):
     def __init__(self, observation_space, action_space):
 		self.exploration_rate = EXPLORATION_MAX
 		self.observation_space = observation_space
@@ -40,12 +40,6 @@ class Agent:
             return random.randrange(self.action_space)
         q_values = self.model.predict(state)
         return np.argmax(q_values[0])
-
-	# def load_network(self, file_path):
-	# 	self.model = load_model(file_path)
-    #
-	# def save_network(self, file_path):
-	# 	self.model.save(file_path)
 
     def experience_replay(self):
         if len(self.memory) < BATCH_SIZE:

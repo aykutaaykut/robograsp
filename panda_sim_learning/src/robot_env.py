@@ -59,6 +59,7 @@ class RobotEnv():
         self.action_step_size = 0.025
         self.distance_threshold = 0.025
         self.object_move_threshold = 0.025
+        self.object_grasp_threshold = 0.05
 
         self.scene = moveit_commander.PlanningSceneInterface()
 
@@ -276,10 +277,15 @@ class RobotEnv():
 
         reward = 10*(curr_distance - next_distance) - 1
 
+        successful_grasping = False
+
         if next_distance <= self.distance_threshold:
-#            self.grasp()
+            self.grasp()
             reward += 200
             done = True
+            if self.get_object_position()[2] > self.object_initial_position[2] + self.object_grasp_threshold:
+                reward += 200
+                successful_grasping = True
         elif not successful_planning:
             reward -= 5
         elif self.get_object_position()[2] < 0.5:
@@ -305,7 +311,7 @@ class RobotEnv():
 #        pose_after = self.transform(after_data.bb_center)
 #        reward = pose_after.position.z - pose_before.position.z
         # pose_after.data yi 16 boyuta cevir
-        return  next_state, reward, done, info, next_distance
+        return  next_state, reward, done, info, next_distance, successful_grasping
 
     # def done(self):
     #     self.joint_states_sub.unregister()

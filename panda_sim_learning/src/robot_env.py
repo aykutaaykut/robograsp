@@ -196,25 +196,25 @@ class RobotEnv():
             self.object_type = 0
             self.object_shape = [0.2, 0.04, 0.04]
             self.object = Box()
-            self.object_offset = np.array([0.0, 0.0, self.object_shape[2]/2])
+            self.object_offset = np.array([0.0, 0.0, self.object_shape[2]/2.0])
             self.object_position = [0.3, -0.15, 0.73 + self.object_shape[2]/2] #fixed z=0.73 (table_height + table_thickness + object_shape/2)
         elif select_object <= 2: #Sphere
             self.object_type = 2
             self.object_shape = [0.04, 0.04, 0.04]
             self.object = Sphere()
-            self.object_offset = np.array([0.0, 0.0, self.object_shape[2]/2])
+            self.object_offset = np.array([0.0, 0.0, self.object_shape[2]/2.0])
             self.object_position = [0.3, -0.15, 0.73 + self.object_shape[2]/2] #fixed z=0.73 (table_height + table_thickness + object_shape/2)
         elif select_object <= 3: #Bunny
             self.object_type = 3
             self.object_shape = [0.0472, 0.08, 0.08]
             self.object = Bunny()
-            self.object_offset = np.array([0.0, 0.0, self.object_shape[2]/2])
+            self.object_offset = np.array([0.0, 0.0, self.object_shape[2]/2.0])
             self.object_position = [0.3, -0.15, 0.66 + self.object_shape[2]/2] #fixed z=0.73 (table_height + table_thickness + object_shape/2)
         elif select_object <= 4: #Cylinder
             self.object_type = 1
             self.object_shape = [0.06, 0.06, 0.15]
             self.object = Cylinder('v')
-            self.object_offset = np.array([0.0, 0.0, self.object_shape[2]/2])
+            self.object_offset = np.array([self.object_shape[0]/2.0, 0.0, 0.0])
             self.object_position = [0.3, -0.15, 0.66 + self.object_shape[2]/2] #fixed z=0.73 (table_height + table_thickness + object_shape/2)
         else:
             print 'NO OBJECT FOUND!'

@@ -29,11 +29,11 @@ from panda_manipulation.MyObject import MyObject, Sphere, Box, Cylinder, Duck, B
 
 class RobotEnv():
     def __init__(self):
-	self.object = None
-
+        self.object = None
+        self.number_of_objects = 4
         self.arm_joint_indices_to_use = [1, 3, 5]
         self.action_step_size = 0.025
-        self.distance_threshold = 0.025
+        self.distance_threshold = 0.03
         self.object_move_threshold = 0.025
         self.object_grasp_threshold = 0.05
 
@@ -53,18 +53,18 @@ class RobotEnv():
         self.arm_joint_names = ['panda_joint1', 'panda_joint2', 'panda_joint3', 'panda_joint4', 'panda_joint5', 'panda_joint6', 'panda_joint7']
         self.arm_joint_values = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
         self.arm_joint_limits = {'panda_joint1' : [-1.4, 1.4],
-                                 'panda_joint2' :  [-0.6, 1.2],
+                                 'panda_joint2' : [-0.6, 1.2],
                                  'panda_joint3' : [-1.4, 1.4],
                                  'panda_joint4' : [-2.8, 0.0],
                                  'panda_joint5' : [-2.8, 0.0],
-                                 'panda_joint6' :  [0.0, 3.6],
+                                 'panda_joint6' : [0.0, 3.6],
                                  'panda_joint7' : [-2.8, 2.8]}
         self.hand_joint_names = ['panda_finger_joint1', 'panda_finger_joint2']
         self.hand_joint_values = [0.0, 0.0]
         self.hand_joint_limits = {'panda_finger_joint1' : [0.0, 0.04],
                                   'panda_finger_joint2' : [0.0, 0.04]}
 
-        self.state_dim = len(self.arm_joint_indices_to_use)
+        self.state_dim = (308, len(self.arm_joint_indices_to_use))
         self.action_dim = 2**len(self.arm_joint_indices_to_use) # 2*len(self.arm_joint_indices_to_use)
         self.action_space = spaces.Discrete(self.action_dim)
 
@@ -81,7 +81,7 @@ class RobotEnv():
         # print self.actions
 
         for action_no in range(self.action_dim):
-            binary_action_no = np.array(self.change_base(action_no, 2, self.state_dim))
+            binary_action_no = np.array(self.change_base(action_no, 2, len(self.arm_joint_indices_to_use)))
             binary_action_no = 1 - 2 * binary_action_no
             action_list = [0.0] * 7
             for index, coefficient in list(zip(self.arm_joint_indices_to_use, binary_action_no.tolist())):
@@ -133,11 +133,11 @@ class RobotEnv():
         object_position = self.get_object_position()
         return np.linalg.norm(gripper_position - (object_position + self.object_offset))
 
-    def is_gripper_over_object(self):
-        gripper_position = self.get_gripper_position()
-        object_position = self.get_object_position()
-        object_shape = self.get_object_shape()
-        return (abs(gripper_position[0] - object_position[0]) < (object_shape[0]/2.0)) and (abs(gripper_position[1] - object_position[1]) < (object_shape[1]/2.0))
+#    def is_gripper_over_object(self):
+#        gripper_position = self.get_gripper_position()
+#        object_position = self.get_object_position()
+#        object_shape = self.get_object_shape()
+#        return (abs(gripper_position[0] - object_position[0]) < (object_shape[0]/2.0)) and (abs(gripper_position[1] - object_position[1]) < (object_shape[1]/2.0))
 
     def initialize_arm_joint_values(self):
         return [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
@@ -145,20 +145,20 @@ class RobotEnv():
     def initialize_hand_joint_values(self):
         return [0.0, 0.0]
 
-    # def random_initialize_arm_joint_values(self):
-    #     return np.random.uniform(self.get_arm_joint_lower_limits(), self.get_arm_joint_upper_limits(), len(self.arm_joint_values)).tolist()
-    #
-    # def random_initialize_hand_joint_values(self):
-    #     return np.random.uniform(self.get_hand_joint_lower_limits(), self.get_hand_joint_upper_limits(), len(self.hand_joint_values)).tolist()
-
-    # def wait(self, step, threshold):
-    #     waiting_time = 0.0
-    #     while self.is_in_motion():
-    #         rospy.sleep(step)
-    #         waiting_time += 0.01
-    #         if waiting_time >= threshold:
-    #             print "Time is up!"
-    #             break
+#    def random_initialize_arm_joint_values(self):
+#        return np.random.uniform(self.get_arm_joint_lower_limits(), self.get_arm_joint_upper_limits(), len(self.arm_joint_values)).tolist()
+#
+#    def random_initialize_hand_joint_values(self):
+#        return np.random.uniform(self.get_hand_joint_lower_limits(), self.get_hand_joint_upper_limits(), len(self.hand_joint_values)).tolist()
+#
+#    def wait(self, step, threshold):
+#        waiting_time = 0.0
+#        while self.is_in_motion():
+#            rospy.sleep(step)
+#            waiting_time += 0.01
+#            if waiting_time >= threshold:
+#                print "Time is up!"
+#                break
 
     def plan(self, arm_new_joint_values, hand_new_joint_values):
         arm_plan = self.arm.plan(arm_new_joint_values)
@@ -187,17 +187,41 @@ class RobotEnv():
         return arm_plan, hand_plan
 
     def reset(self):
-	if self.object is not None:
-		self.object.delete()
-		rospy.sleep(5)
-		self.scene.remove_world_object(name = 'object_id')
-		self.scene.remove_attached_object('panda_hand')
-	self.object_shape = [0.2, 0.04, 0.04]
-        self.object = Box()
-	self.object_offset = np.array([0.0, 0.0, self.object_shape[2]/2])
-	self.object_position = [0.3, -0.15, 0.73 + self.object_shape[2]/2] #fixed z=0.73 (table_height + table_thickness + object_shape/2)
+        if self.object is not None:
+            self.object.delete()
+            rospy.sleep(5)
+            self.scene.remove_world_object(name = 'object_id')
+            self.scene.remove_attached_object('panda_hand')
+        select_object = random.random()*self.number_of_objects
+        if select_object <= 1: #Box
+            self.object_type = 0
+            self.object_shape = [0.2, 0.04, 0.04]
+            self.object = Box()
+            self.object_offset = np.array([0.0, 0.0, self.object_shape[2]/2.0])
+            self.object_position = [0.3, -0.15, 0.73 + self.object_shape[2]/2] #fixed z=0.73 (table_height + table_thickness + object_shape/2)
+        elif select_object <= 2: #Sphere
+            self.object_type = 2
+            self.object_shape = [0.04, 0.04, 0.04]
+            self.object = Sphere()
+            self.object_offset = np.array([0.0, 0.0, self.object_shape[2]/2.0])
+            self.object_position = [0.3, -0.15, 0.73 + self.object_shape[2]/2] #fixed z=0.73 (table_height + table_thickness + object_shape/2)
+        elif select_object <= 3: #Bunny
+            self.object_type = 3
+            self.object_shape = [0.0472, 0.08, 0.08]
+            self.object = Bunny()
+            self.object_offset = np.array([0.0, 0.0, self.object_shape[2]/2.0])
+            self.object_position = [0.3, -0.15, 0.66 + self.object_shape[2]/2] #fixed z=0.73 (table_height + table_thickness + object_shape/2)
+        elif select_object <= 4: #Cylinder
+            self.object_type = 1
+            self.object_shape = [0.06, 0.06, 0.15]
+            self.object = Cylinder('v')
+            self.object_offset = np.array([0.0, 0.0, self.object_shape[2]/2.0])
+            self.object_position = [0.3, -0.15, 0.66 + self.object_shape[2]/2] #fixed z=0.73 (table_height + table_thickness + object_shape/2)
+        else:
+            print 'NO OBJECT FOUND!'
+            raise
 
-	arm_new_joint_values = self.initialize_arm_joint_values()
+        arm_new_joint_values = self.initialize_arm_joint_values()
         hand_new_joint_values = self.initialize_hand_joint_values()
         self.plan_and_execute(arm_new_joint_values, hand_new_joint_values)
 
@@ -208,17 +232,22 @@ class RobotEnv():
         self.object.set_position(object_pose)
         self.object.place_on_table()
         rospy.sleep(2)
-        self.scene.remove_attached_object('panda_hand')
         self.scene = moveit_commander.PlanningSceneInterface()
         self.create_planning_scene()
         rospy.sleep(2)
         self.object_initial_position = self.get_object_position()
 
         #        return np.concatenate((np.concatenate((self.arm_joint_values, self.hand_joint_values), axis=0), self.get_gripper_position('world'), self.object_initial_position), axis=0).tolist()
-        return [self.arm_joint_values[i] for i in self.arm_joint_indices_to_use]
+        state = [self.arm_joint_values[i] for i in self.arm_joint_indices_to_use]
+#        object_state = [0, 0, 0, 0]
+#        object_state[self.object_type] = 1
+        object_data = rospy.wait_for_message('/baris/features', PcFeatures)
+        object_state = object_data.data
+        state = (object_state, state)
+        return state
 
     def transform(self, coordinates):
-        transform = self.tf_buffer.lookup_transform('panda_link0', 'camera_depth_optical_frame', rospy.Time(0), rospy.Duration(1.0))
+        transform = self.tf_buffer.lookup_transform('world', 'camera_depth_optical_frame', rospy.Time(0), rospy.Duration(1.0))
 
         kinect_object = PointStamped()
         kinect_object.point.x = coordinates.x
@@ -232,7 +261,6 @@ class RobotEnv():
         pos.position.x = robot_object.point.x
         pos.position.y = robot_object.point.y
         pos.position.z = robot_object.point.z
-#        pos.orientation = action.orientation
         return pos
 
     def step(self, action):
@@ -256,11 +284,8 @@ class RobotEnv():
         else:
             successful_planning = False
 
-#        self.wait(0.01, 300)
         next_distance = self.get_distance_between_gripper_and_object()
         # Reward definition
-        # reward = -(next_distance**2) + (0.5 * ((next_distance - curr_distance)**2))
-
         reward = 10*(curr_distance - next_distance) - 1
 
         successful_grasping = False
@@ -282,36 +307,46 @@ class RobotEnv():
             done = True
         elif np.linalg.norm(self.get_object_position() - self.object_initial_position) >= self.object_move_threshold:
             reward -= 5
-        # elif self.get_object_position()[2] < 0.5:
-        #     reward -= 10
-        #     done = True
-        # elif np.linalg.norm(self.get_object_position() - self.object_initial_position) >= self.object_move_threshold:
-        #     reward -= 10
-        #     done = True
-        # elif self.get_gripper_position()[2] < 0.7:
-        #     reward -= 10
-        #     done = True
         next_state = [self.arm_joint_values[i] for i in self.arm_joint_indices_to_use]
-#        next_state = np.concatenate((np.concatenate((self.arm_joint_values, self.hand_joint_values), axis=0), self.get_gripper_position('world'), self.get_object_position()), axis=0).tolist()
-#        after_data = rospy.wait_for_message('/baris/features', PcFeatures)
+#        object_state = [0, 0, 0, 0]
+#        object_state[self.object_type] = 1
+#        next_state = next_state + object_state
+        object_data = rospy.wait_for_message('/baris/features', PcFeatures)
+        object_state = object_data.data
+        next_state = (object_state, next_state)
 #        pose_after = self.transform(after_data.bb_center)
 #        reward = pose_after.position.z - pose_before.position.z
         # pose_after.data yi 16 boyuta cevir
         return  next_state, reward, done, info, next_distance, successful_grasping
 
-    # def done(self):
-    #     self.joint_states_sub.unregister()
-    #     rospy.signal_shutdown("done")
-
     def create_planning_scene(self):
         object_pose = PoseStamped()
         object_pose.header.frame_id = self.robot.get_planning_frame()
         object_position = self.get_object_position()
-        object_pose.pose.position.x = object_position[0]
-        object_pose.pose.position.y = object_position[1]
-        object_pose.pose.position.z = object_position[2] - 0.1
-        object_size = (self.get_object_shape()[0], self.get_object_shape()[1], self.get_object_shape()[2])
-        self.scene.add_box('object_id', object_pose, size = object_size)
+        if self.object_type == 0:
+            object_pose.pose.position.x = self.get_object_position()[0]
+            object_pose.pose.position.y = self.get_object_position()[1]
+            object_pose.pose.position.z = self.get_object_position()[2] - 0.1
+            object_size = (self.get_object_shape()[0], self.get_object_shape()[1], self.get_object_shape()[2])
+            self.scene.add_box('object_id', object_pose, size = object_size)
+        elif self.object_type == 1:
+            object_pose.pose.position.x = self.get_object_position()[0]
+            object_pose.pose.position.y = self.get_object_position()[1]
+            object_pose.pose.position.z = self.get_object_position()[2] - 0.1
+            object_size = (self.get_object_shape()[0], self.get_object_shape()[1], self.get_object_shape()[2])
+            self.scene.add_box('object_id', object_pose, size = object_size)
+        elif self.object_type == 2:
+            object_pose.pose.position.x = self.get_object_position()[0]
+            object_pose.pose.position.y = self.get_object_position()[1]
+            object_pose.pose.position.z = self.get_object_position()[2] - 0.1
+            radius = self.get_object_shape()[0]/2
+            self.scene.add_sphere('object_id', object_pose, radius = radius)
+        elif self.object_type == 3:
+            object_pose.pose.position.x = self.get_object_position()[0]
+            object_pose.pose.position.y = self.get_object_position()[1]
+            object_pose.pose.position.z = self.get_object_position()[2] - 0.05
+            object_size = (self.get_object_shape()[0], self.get_object_shape()[1], self.get_object_shape()[2])
+            self.scene.add_box('object_id', object_pose, size = object_size)
 
     def open_gripper(self, pre_grasp_posture):
         pre_grasp_posture.header.frame_id = self.robot.get_planning_frame()
@@ -334,23 +369,69 @@ class RobotEnv():
         #grasp_pose
         object_position = self.get_object_position()
         grasp_msg.grasp_pose.header.frame_id = self.robot.get_planning_frame()
-        grasp_msg.grasp_pose.pose.position.x = object_position[0]
-        grasp_msg.grasp_pose.pose.position.y = object_position[1]
-        grasp_msg.grasp_pose.pose.position.z = object_position[2] - 0.1 + 0.058 + (self.get_object_shape()[2]/2.0) + 0.02
-        orientation = tf.transformations.quaternion_from_euler(0, -pi, 0)
-        grasp_msg.grasp_pose.pose.orientation.x = orientation[0]
-        grasp_msg.grasp_pose.pose.orientation.y = orientation[1]
-        grasp_msg.grasp_pose.pose.orientation.z = orientation[2]
-        grasp_msg.grasp_pose.pose.orientation.w = orientation[3]
+        if self.object_type == 0 or self.object_type == 2:
+            grasp_msg.grasp_pose.pose.position.x = object_position[0]
+            grasp_msg.grasp_pose.pose.position.y = object_position[1]
+            grasp_msg.grasp_pose.pose.position.z = object_position[2] - 0.1 + 0.058 + (self.get_object_shape()[2]/2.0) + 0.02
+            orientation = tf.transformations.quaternion_from_euler(0, -pi, 0)
+            grasp_msg.grasp_pose.pose.orientation.x = orientation[0]
+            grasp_msg.grasp_pose.pose.orientation.y = orientation[1]
+            grasp_msg.grasp_pose.pose.orientation.z = orientation[2]
+            grasp_msg.grasp_pose.pose.orientation.w = orientation[3]
 
-        #the approach direction to take before picking an object
-        #pre_grasp_approach
-        grasp_msg.pre_grasp_approach.direction.header.frame_id = self.robot.get_planning_frame()
-        grasp_msg.pre_grasp_approach.direction.vector.x = 0.0
-        grasp_msg.pre_grasp_approach.direction.vector.y = 0.0
-        grasp_msg.pre_grasp_approach.direction.vector.z = -0.4
-        grasp_msg.pre_grasp_approach.min_distance = 0.095
-        grasp_msg.pre_grasp_approach.desired_distance = 0.115
+            #the approach direction to take before picking an object
+            #pre_grasp_approach
+            grasp_msg.pre_grasp_approach.direction.header.frame_id = self.robot.get_planning_frame()
+            grasp_msg.pre_grasp_approach.direction.vector.x = 0.0
+            grasp_msg.pre_grasp_approach.direction.vector.y = 0.0
+            grasp_msg.pre_grasp_approach.direction.vector.z = -0.4
+            grasp_msg.pre_grasp_approach.min_distance = 0.095
+            grasp_msg.pre_grasp_approach.desired_distance = 0.115
+
+            #grasp_posture with close_gripper
+            self.close_gripper(grasp_msg.grasp_posture, self.get_object_shape()[1]/2.0, self.get_object_shape()[1]/2.0)
+        elif self.object_type == 1:
+            grasp_msg.grasp_pose.pose.position.x = object_position[0] + 0.058 + (self.get_object_shape()[0]/2.0) + 0.02
+            grasp_msg.grasp_pose.pose.position.y = object_position[1]
+            grasp_msg.grasp_pose.pose.position.z = object_position[2] - 0.1
+            orientation = tf.transformations.quaternion_from_euler(0, -pi/2, 0)
+            grasp_msg.grasp_pose.pose.orientation.x = orientation[0]
+            grasp_msg.grasp_pose.pose.orientation.y = orientation[1]
+            grasp_msg.grasp_pose.pose.orientation.z = orientation[2]
+            grasp_msg.grasp_pose.pose.orientation.w = orientation[3]
+
+            #the approach direction to take before picking an object
+            #pre_grasp_approach
+            grasp_msg.pre_grasp_approach.direction.header.frame_id = self.robot.get_planning_frame()
+            grasp_msg.pre_grasp_approach.direction.vector.x = -0.4
+            grasp_msg.pre_grasp_approach.direction.vector.y = 0.0
+            grasp_msg.pre_grasp_approach.direction.vector.z = 0.0
+            grasp_msg.pre_grasp_approach.min_distance = 0.095
+            grasp_msg.pre_grasp_approach.desired_distance = 0.115
+
+            #grasp_posture with close_gripper
+            self.close_gripper(grasp_msg.grasp_posture, self.get_object_shape()[1]/2.0 - 0.00008182548, self.get_object_shape()[1]/2.0 - 0.00008182548)
+        elif self.object_type == 3:
+            grasp_msg.grasp_pose.pose.position.x = object_position[0] - 0.008
+            grasp_msg.grasp_pose.pose.position.y = object_position[1] + 0.058 + (self.get_object_shape()[1]/2.0) + 0.02
+            grasp_msg.grasp_pose.pose.position.z = object_position[2] - 0.04
+            orientation = tf.transformations.quaternion_from_euler(0, -pi/2, pi/2)
+            grasp_msg.grasp_pose.pose.orientation.x = orientation[0]
+            grasp_msg.grasp_pose.pose.orientation.y = orientation[1]
+            grasp_msg.grasp_pose.pose.orientation.z = orientation[2]
+            grasp_msg.grasp_pose.pose.orientation.w = orientation[3]
+
+            #the approach direction to take before picking an object
+            #pre_grasp_approach
+            grasp_msg.pre_grasp_approach.direction.header.frame_id = self.robot.get_planning_frame()
+            grasp_msg.pre_grasp_approach.direction.vector.x = 0.0
+            grasp_msg.pre_grasp_approach.direction.vector.y = -0.4
+            grasp_msg.pre_grasp_approach.direction.vector.z = 0.0
+            grasp_msg.pre_grasp_approach.min_distance = 0.095
+            grasp_msg.pre_grasp_approach.desired_distance = 0.115
+
+            #grasp_posture with close_gripper
+            self.close_gripper(grasp_msg.grasp_posture, self.get_object_shape()[0]/2.0, self.get_object_shape()[0]/2.0)
 
         #the retreat direction to take after a grasp has been completed (object is attached)
         #post_grasp_retreat
@@ -364,12 +445,13 @@ class RobotEnv():
         #pre_grasp_posture with open_gripper
         self.open_gripper(grasp_msg.pre_grasp_posture)
 
-        #grasp_posture with close_gripper
-        self.close_gripper(grasp_msg.grasp_posture, self.get_object_shape()[1]/2.0, self.get_object_shape()[1]/2.0)
-
         self.arm.set_support_surface_name('table_top')
 
         self.arm.pick('object_id', [grasp_msg])
-	rospy.sleep(10)
+
+        if self.object_type == 1:
+            rospy.sleep(20)
+        else:
+            rospy.sleep(10)
         # self = RobotEnv()
         # self.reset()

@@ -7,5 +7,5 @@
 	<node name="learn" pkg="panda_sim_learning" type="learn.py" output="screen" />
 
 	<!--node name="pick" pkg="panda_sim_learning" type="pick.py" output="screen" /-->
-
+	
 </launch>

@@ -16,7 +16,7 @@ import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 
-EPISODES = 1000
+EPISODES = 10000
 TIME_STEPS = 300
 SAVE_NETWORK = False
 LOAD_NETWORK = True
@@ -62,7 +62,9 @@ if __name__ == '__main__':
         log('#################### EPISODE ' + str(e) + ' ' + '#'*(20-int(math.log(e, 10))))
         log('###################################################')
         state = env.reset()
-        state = np.reshape(state, [1, state_dim])
+        object_state = np.reshape(state[0], [1, state_dim[0]])
+        arm_state = np.reshape(state[1], [1, state_dim[1]])
+        state = (object_state, arm_state)
         total_reward = 0
         for t in range(1, TIME_STEPS+1):
             action = dqn_agent.act(state)
@@ -70,7 +72,9 @@ if __name__ == '__main__':
             state_next, reward, terminal, info, next_distance, successful_grasping = env.step(action)
             total_reward += reward
             dist_list.append(next_distance)
-            state_next = np.reshape(state_next, [1, state_dim])
+            object_state_next = np.reshape(state_next[0], [1, state_dim[0]])
+            arm_state_next = np.reshape(state_next[1], [1, state_dim[1]])
+            state_next = (object_state_next, arm_state_next)
             # log('State: ' + str(state))
             # log('Action: ' + str(action))
             # log('Reward: ' + str(reward))

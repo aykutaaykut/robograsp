@@ -29,13 +29,11 @@ from panda_manipulation.MyObject import MyObject, Sphere, Box, Cylinder, Duck, B
 
 class RobotEnv():
     def __init__(self):
-        self.object_shape = [0.2, 0.04, 0.04]
-        self.object_position = [0.3, -0.15, 0.73 + self.object_shape[2]/2] #fixed z=0.73 (table_height + table_thickness + object_shape/2)
-        self.object = Box()
+	self.object = None
+
         self.arm_joint_indices_to_use = [1, 3, 5]
         self.action_step_size = 0.025
         self.distance_threshold = 0.025
-        self.object_offset = np.array([0.0, 0.0, self.object_shape[2]/2])
         self.object_move_threshold = 0.025
         self.object_grasp_threshold = 0.05
 
@@ -189,6 +187,20 @@ class RobotEnv():
         return arm_plan, hand_plan
 
     def reset(self):
+	if self.object is not None:
+		self.object.delete()
+		rospy.sleep(5)
+		self.scene.remove_world_object(name = 'object_id')
+		self.scene.remove_attached_object('panda_hand')
+	self.object_shape = [0.2, 0.04, 0.04]
+        self.object = Box()
+	self.object_offset = np.array([0.0, 0.0, self.object_shape[2]/2])
+	self.object_position = [0.3, -0.15, 0.73 + self.object_shape[2]/2] #fixed z=0.73 (table_height + table_thickness + object_shape/2)
+
+	arm_new_joint_values = self.initialize_arm_joint_values()
+        hand_new_joint_values = self.initialize_hand_joint_values()
+        self.plan_and_execute(arm_new_joint_values, hand_new_joint_values)
+
         object_pose = geometry_msgs.msg.Pose()
         object_pose.position.x = self.object_position[0]
         object_pose.position.y = self.object_position[1]
@@ -201,10 +213,6 @@ class RobotEnv():
         self.create_planning_scene()
         rospy.sleep(2)
         self.object_initial_position = self.get_object_position()
-
-        arm_new_joint_values = self.initialize_arm_joint_values()
-        hand_new_joint_values = self.initialize_hand_joint_values()
-        self.plan_and_execute(arm_new_joint_values, hand_new_joint_values)
 
         #        return np.concatenate((np.concatenate((self.arm_joint_values, self.hand_joint_values), axis=0), self.get_gripper_position('world'), self.object_initial_position), axis=0).tolist()
         return [self.arm_joint_values[i] for i in self.arm_joint_indices_to_use]
@@ -362,5 +370,6 @@ class RobotEnv():
         self.arm.set_support_surface_name('table_top')
 
         self.arm.pick('object_id', [grasp_msg])
+	rospy.sleep(10)
         # self = RobotEnv()
         # self.reset()

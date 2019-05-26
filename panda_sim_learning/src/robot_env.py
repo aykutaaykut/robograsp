@@ -33,7 +33,7 @@ class RobotEnv():
         self.number_of_objects = 4
         self.arm_joint_indices_to_use = [1, 3, 5]
         self.action_step_size = 0.025
-        self.distance_threshold = 0.025
+        self.distance_threshold = 0.03
         self.object_move_threshold = 0.025
         self.object_grasp_threshold = 0.05
 
@@ -189,6 +189,7 @@ class RobotEnv():
     def reset(self):
         if self.object is not None:
             self.object.delete()
+            rospy.sleep(5)
             self.scene.remove_world_object(name = 'object_id')
             self.scene.remove_attached_object('panda_hand')
         select_object = random.random()*self.number_of_objects
@@ -214,7 +215,7 @@ class RobotEnv():
             self.object_type = 1
             self.object_shape = [0.06, 0.06, 0.15]
             self.object = Cylinder('v')
-            self.object_offset = np.array([self.object_shape[0]/2.0, 0.0, 0.0])
+            self.object_offset = np.array([0.0, 0.0, self.object_shape[2]/2.0])
             self.object_position = [0.3, -0.15, 0.66 + self.object_shape[2]/2] #fixed z=0.73 (table_height + table_thickness + object_shape/2)
         else:
             print 'NO OBJECT FOUND!'

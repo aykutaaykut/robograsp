@@ -29,7 +29,6 @@ class Agent(object):
 		self.model = Sequential()
 		self.model.add(Dense(24, input_shape=(observation_space,), activation="relu"))
 		self.model.add(Dense(24, activation="relu"))
-		self.model.add(Dense(24, activation="relu"))
 		self.model.add(Dense(self.action_space, activation="linear"))
 		self.model.compile(loss="mse", optimizer=Adam(lr=LEARNING_RATE))
 

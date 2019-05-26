@@ -13,12 +13,13 @@ if __name__ == '__main__':
 
     env = RobotEnv()
     env.reset()
+    env.step(2)
 #    env.grasp()
-    while True:
+#    while True:
 #        env.grasp()
 #        env.reset()
-        next_distance = env.get_distance_between_gripper_and_object()
-        if next_distance <= 0.07:
-            env.grasp()
-            env.reset()
-        env.step(2)
+#        next_distance = env.get_distance_between_gripper_and_object()
+#        if next_distance <= 0.07:
+#            env.grasp()
+#            env.reset()
+#        env.step(2)

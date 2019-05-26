@@ -64,7 +64,7 @@ class RobotEnv():
         self.hand_joint_limits = {'panda_finger_joint1' : [0.0, 0.04],
                                   'panda_finger_joint2' : [0.0, 0.04]}
 
-        self.state_dim = len(self.arm_joint_indices_to_use) + self.number_of_objects
+        self.state_dim = (308, len(self.arm_joint_indices_to_use))
         self.action_dim = 2**len(self.arm_joint_indices_to_use) # 2*len(self.arm_joint_indices_to_use)
         self.action_space = spaces.Discrete(self.action_dim)
 
@@ -145,21 +145,21 @@ class RobotEnv():
     def initialize_hand_joint_values(self):
         return [0.0, 0.0]
 
-    # def random_initialize_arm_joint_values(self):
-    #     return np.random.uniform(self.get_arm_joint_lower_limits(), self.get_arm_joint_upper_limits(), len(self.arm_joint_values)).tolist()
-    #
-    # def random_initialize_hand_joint_values(self):
-    #     return np.random.uniform(self.get_hand_joint_lower_limits(), self.get_hand_joint_upper_limits(), len(self.hand_joint_values)).tolist()
-
-    # def wait(self, step, threshold):
-    #     waiting_time = 0.0
-    #     while self.is_in_motion():
-    #         rospy.sleep(step)
-    #         waiting_time += 0.01
-    #         if waiting_time >= threshold:
-    #             print "Time is up!"
-    #             break
-
+#    def random_initialize_arm_joint_values(self):
+#        return np.random.uniform(self.get_arm_joint_lower_limits(), self.get_arm_joint_upper_limits(), len(self.arm_joint_values)).tolist()
+#    
+#    def random_initialize_hand_joint_values(self):
+#        return np.random.uniform(self.get_hand_joint_lower_limits(), self.get_hand_joint_upper_limits(), len(self.hand_joint_values)).tolist()
+#    
+#    def wait(self, step, threshold):
+#        waiting_time = 0.0
+#        while self.is_in_motion():
+#            rospy.sleep(step)
+#            waiting_time += 0.01
+#            if waiting_time >= threshold:
+#                print "Time is up!"
+#                break
+    
     def plan(self, arm_new_joint_values, hand_new_joint_values):
         arm_plan = self.arm.plan(arm_new_joint_values)
         hand_plan = self.hand.plan(hand_new_joint_values)
@@ -239,13 +239,15 @@ class RobotEnv():
 
         #        return np.concatenate((np.concatenate((self.arm_joint_values, self.hand_joint_values), axis=0), self.get_gripper_position('world'), self.object_initial_position), axis=0).tolist()
         state = [self.arm_joint_values[i] for i in self.arm_joint_indices_to_use]
-        object_state = [0, 0, 0, 0]
-        object_state[self.object_type] = 1
-        state = state + object_state
+#        object_state = [0, 0, 0, 0]
+#        object_state[self.object_type] = 1
+        object_data = rospy.wait_for_message('/baris/features', PcFeatures)
+        object_state = object_data.data
+        state = (object_state, state)
         return state
 
     def transform(self, coordinates):
-        transform = self.tf_buffer.lookup_transform('panda_link0', 'camera_depth_optical_frame', rospy.Time(0), rospy.Duration(1.0))
+        transform = self.tf_buffer.lookup_transform('world', 'camera_depth_optical_frame', rospy.Time(0), rospy.Duration(1.0))
 
         kinect_object = PointStamped()
         kinect_object.point.x = coordinates.x
@@ -259,7 +261,6 @@ class RobotEnv():
         pos.position.x = robot_object.point.x
         pos.position.y = robot_object.point.y
         pos.position.z = robot_object.point.z
-#        pos.orientation = action.orientation
         return pos
 
     def step(self, action):
@@ -283,11 +284,8 @@ class RobotEnv():
         else:
             successful_planning = False
 
-#        self.wait(0.01, 300)
         next_distance = self.get_distance_between_gripper_and_object()
         # Reward definition
-        # reward = -(next_distance**2) + (0.5 * ((next_distance - curr_distance)**2))
-
         reward = 10*(curr_distance - next_distance) - 1
 
         successful_grasping = False
@@ -309,29 +307,17 @@ class RobotEnv():
             done = True
         elif np.linalg.norm(self.get_object_position() - self.object_initial_position) >= self.object_move_threshold:
             reward -= 5
-        # elif self.get_object_position()[2] < 0.5:
-        #     reward -= 10
-        #     done = True
-        # elif np.linalg.norm(self.get_object_position() - self.object_initial_position) >= self.object_move_threshold:
-        #     reward -= 10
-        #     done = True
-        # elif self.get_gripper_position()[2] < 0.7:
-        #     reward -= 10
-        #     done = True
         next_state = [self.arm_joint_values[i] for i in self.arm_joint_indices_to_use]
-        object_state = [0, 0, 0, 0]
-        object_state[self.object_type] = 1
-        next_state = next_state + object_state
-#        next_state = np.concatenate((np.concatenate((self.arm_joint_values, self.hand_joint_values), axis=0), self.get_gripper_position('world'), self.get_object_position()), axis=0).tolist()
-#        after_data = rospy.wait_for_message('/baris/features', PcFeatures)
+#        object_state = [0, 0, 0, 0]
+#        object_state[self.object_type] = 1
+#        next_state = next_state + object_state
+        object_data = rospy.wait_for_message('/baris/features', PcFeatures)
+        object_state = object_data.data
+        next_state = (object_state, next_state)
 #        pose_after = self.transform(after_data.bb_center)
 #        reward = pose_after.position.z - pose_before.position.z
         # pose_after.data yi 16 boyuta cevir
         return  next_state, reward, done, info, next_distance, successful_grasping
-
-    # def done(self):
-    #     self.joint_states_sub.unregister()
-    #     rospy.signal_shutdown("done")
 
     def create_planning_scene(self):
         object_pose = PoseStamped()

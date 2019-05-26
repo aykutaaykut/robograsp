@@ -18,11 +18,11 @@ import matplotlib.pyplot as plt
 
 EPISODES = 10000
 TIME_STEPS = 300
-SAVE_NETWORK = False
-LOAD_NETWORK = True
-LOAD_PATH = '/home/' + pwd.getpwuid(os.getuid())[0] + '/catkin_ws/src/dqn_models/2019-05-16 15:50:36.912158/model_e_900.h5'
+SAVE_NETWORK = True
+LOAD_NETWORK = False
+LOAD_PATH = '/home/' + pwd.getpwuid(os.getuid())[0] + '/catkin_ws/src/dqn_models/2019-05-16 11:47:11.009540/model_e_2_t_300.h5'
 
-LOG_DIR = '/home/' + pwd.getpwuid(os.getuid())[0] + '/catkin_ws/src/dqn_log_new/'
+LOG_DIR = '/home/' + pwd.getpwuid(os.getuid())[0] + '/catkin_ws/src/dqn_log/'
 LOG_FILE = 'dqn_log_' + str(datetime.datetime.now()) + '.txt'
 MODEL_DIR = '/home/' + pwd.getpwuid(os.getuid())[0] + '/catkin_ws/src/dqn_models/' + str(datetime.datetime.now()) + '/'
 

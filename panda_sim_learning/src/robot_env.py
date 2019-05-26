@@ -147,10 +147,10 @@ class RobotEnv():
 
 #    def random_initialize_arm_joint_values(self):
 #        return np.random.uniform(self.get_arm_joint_lower_limits(), self.get_arm_joint_upper_limits(), len(self.arm_joint_values)).tolist()
-#
+#    
 #    def random_initialize_hand_joint_values(self):
 #        return np.random.uniform(self.get_hand_joint_lower_limits(), self.get_hand_joint_upper_limits(), len(self.hand_joint_values)).tolist()
-#
+#    
 #    def wait(self, step, threshold):
 #        waiting_time = 0.0
 #        while self.is_in_motion():
@@ -159,7 +159,7 @@ class RobotEnv():
 #            if waiting_time >= threshold:
 #                print "Time is up!"
 #                break
-
+    
     def plan(self, arm_new_joint_values, hand_new_joint_values):
         arm_plan = self.arm.plan(arm_new_joint_values)
         hand_plan = self.hand.plan(hand_new_joint_values)
@@ -220,11 +220,11 @@ class RobotEnv():
         else:
             print 'NO OBJECT FOUND!'
             raise
-
+            
         arm_new_joint_values = self.initialize_arm_joint_values()
         hand_new_joint_values = self.initialize_hand_joint_values()
         self.plan_and_execute(arm_new_joint_values, hand_new_joint_values)
-
+        
         object_pose = geometry_msgs.msg.Pose()
         object_pose.position.x = self.object_position[0]
         object_pose.position.y = self.object_position[1]
@@ -378,7 +378,7 @@ class RobotEnv():
             grasp_msg.grasp_pose.pose.orientation.y = orientation[1]
             grasp_msg.grasp_pose.pose.orientation.z = orientation[2]
             grasp_msg.grasp_pose.pose.orientation.w = orientation[3]
-
+            
             #the approach direction to take before picking an object
             #pre_grasp_approach
             grasp_msg.pre_grasp_approach.direction.header.frame_id = self.robot.get_planning_frame()
@@ -387,7 +387,7 @@ class RobotEnv():
             grasp_msg.pre_grasp_approach.direction.vector.z = -0.4
             grasp_msg.pre_grasp_approach.min_distance = 0.095
             grasp_msg.pre_grasp_approach.desired_distance = 0.115
-
+            
             #grasp_posture with close_gripper
             self.close_gripper(grasp_msg.grasp_posture, self.get_object_shape()[1]/2.0, self.get_object_shape()[1]/2.0)
         elif self.object_type == 1:
@@ -399,7 +399,7 @@ class RobotEnv():
             grasp_msg.grasp_pose.pose.orientation.y = orientation[1]
             grasp_msg.grasp_pose.pose.orientation.z = orientation[2]
             grasp_msg.grasp_pose.pose.orientation.w = orientation[3]
-
+            
             #the approach direction to take before picking an object
             #pre_grasp_approach
             grasp_msg.pre_grasp_approach.direction.header.frame_id = self.robot.get_planning_frame()
@@ -408,7 +408,7 @@ class RobotEnv():
             grasp_msg.pre_grasp_approach.direction.vector.z = 0.0
             grasp_msg.pre_grasp_approach.min_distance = 0.095
             grasp_msg.pre_grasp_approach.desired_distance = 0.115
-
+            
             #grasp_posture with close_gripper
             self.close_gripper(grasp_msg.grasp_posture, self.get_object_shape()[1]/2.0 - 0.00008182548, self.get_object_shape()[1]/2.0 - 0.00008182548)
         elif self.object_type == 3:
@@ -420,7 +420,7 @@ class RobotEnv():
             grasp_msg.grasp_pose.pose.orientation.y = orientation[1]
             grasp_msg.grasp_pose.pose.orientation.z = orientation[2]
             grasp_msg.grasp_pose.pose.orientation.w = orientation[3]
-
+            
             #the approach direction to take before picking an object
             #pre_grasp_approach
             grasp_msg.pre_grasp_approach.direction.header.frame_id = self.robot.get_planning_frame()
@@ -429,7 +429,7 @@ class RobotEnv():
             grasp_msg.pre_grasp_approach.direction.vector.z = 0.0
             grasp_msg.pre_grasp_approach.min_distance = 0.095
             grasp_msg.pre_grasp_approach.desired_distance = 0.115
-
+            
             #grasp_posture with close_gripper
             self.close_gripper(grasp_msg.grasp_posture, self.get_object_shape()[0]/2.0, self.get_object_shape()[0]/2.0)
 
@@ -448,7 +448,7 @@ class RobotEnv():
         self.arm.set_support_surface_name('table_top')
 
         self.arm.pick('object_id', [grasp_msg])
-
+        
         if self.object_type == 1:
             rospy.sleep(20)
         else:

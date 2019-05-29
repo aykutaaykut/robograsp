@@ -1,0 +1,12 @@
+<?xml version="1.0"?>
+<launch>
+  
+  <!-- Arm  -->
+  <rosparam file="$(find panda_sim_gazebo)/controller/franka_control.yaml" command="load"/>
+
+  <!-- Gripper -->
+  <rosparam file="$(find panda_sim_gazebo)/controller/gripper_node_config.yaml" command="load" />
+  
+  <node name="controller_spawner" pkg="controller_manager" type="spawner" respawn="false" output="screen" args="panda_arm_controller panda_hand_controller joint_state_controller"/>
+  
+</launch>

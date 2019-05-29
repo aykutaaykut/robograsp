@@ -1,0 +1,18 @@
+<package>
+
+  <name>pc_segmentation</name>
+  <version>0.4.2</version>
+  <description>
+     Alive Lab Point Cloud Segmentation and VPFH extraction package.
+  </description>
+  <author email="baakgun@ku.edu.tr">Baris Akgun</author>
+  <maintainer email="ceteke13@ku.edu.tr">Cem Eteke</maintainer>
+
+  <license>BSD</license>
+
+  <buildtool_depend>catkin</buildtool_depend>
+  <buildtool_depend>sensor_msgs</buildtool_depend>
+  <buildtool_depend>geometry_msgs</buildtool_depend>
+  <buildtool_depend>std_msgs</buildtool_depend>
+
+</package>

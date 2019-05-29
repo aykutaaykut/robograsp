@@ -1,0 +1,16 @@
+<?xml version="1.0"?>
+<package>
+  <name>panda_sim_description</name>
+  <version>0.1.0</version>
+  <description>The panda_sim_description package</description>
+
+  <maintainer email="dkebude16@ku.edu.tr">Dogancan Kebude</maintainer>
+
+  <license>TODO</license>
+
+  <buildtool_depend>catkin</buildtool_depend>
+
+  <export>
+
+  </export>
+</package>

@@ -1,0 +1,4 @@
+*.pyc
+dqn_log/dqn*
+dqn_models/2*
+distance_figs/distance*
